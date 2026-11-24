@@ -1,0 +1,31 @@
+# Ambiente virtual
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Modelos de redes neurais
+*.pt
+*.onnx
+
+# Arquivos de execução
+runs/
+logs/
+*.log
+
+# Privacidade e credenciais
+.env
+.env.*
+captures/
+recordings/
+
+# Testes
+.pytest_cache/
+.coverage
+
+# Sistema operacional
+.DS_Store
+Thumbs.db

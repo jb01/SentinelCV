@@ -25,3 +25,16 @@ Os testes simulam o modelo e não precisam de câmera nem de download de pesos.
 ## Referência
 
 MAIA, Helton. [Deep Learning — Teoria e Prática, capítulo 4: Visão Computacional](https://heltonmaia.com/deeplearning/chapters/ch4/ch4.html). Exemplos de YOLO26n pré-treinado no COCO, inferência em quadros OpenCV e formatos `xyxy`, `xywh` e `xywhn`.
+
+## Experimentos de desempenho
+
+Para coletar métricas, execute, por exemplo:
+
+```bash
+.venv/bin/python main.py --benchmark --duration 60 --scenario sala-vazia
+.venv/bin/python main.py --benchmark --duration 60 --scenario pessoa-presente
+```
+
+A duração é em segundos e vale para a coleta após cinco segundos de aquecimento. O experimento encerra automaticamente após um quadro completo atingir a duração; Q encerra antes e exporta os dados parciais. Cada execução produz um CSV e um JSON com nomes exclusivos em `results/`. Use identificadores de cenário sem dados pessoais. O JSON registra o motivo do encerramento e os parâmetros e versões do ambiente.
+
+O tempo de processamento de cada quadro inclui captura, inferência, desenho, exibição e espera da tecla. O FPS instantâneo é o inverso desse tempo; o FPS médio é o número de amostras dividido pelo tempo decorrido entre o início do primeiro e o fim do último quadro coletado. A duração efetiva pode ultrapassar a solicitada pelo tempo do último quadro. O percentil 95 usa interpolação linear e o desvio padrão é populacional. A confiança média considera a maior confiança de cada quadro com presença; quadros sem detecção têm confiança vazia no CSV. Caso não haja amostras, estatísticas indefinidas aparecem como `null` no JSON.

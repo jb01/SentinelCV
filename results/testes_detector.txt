@@ -1,0 +1,15 @@
+============================= test session starts ==============================
+platform linux -- Python 3.14.4, pytest-9.2.0, pluggy-1.7.0 -- /home/josemberg/Documentos/MESTRADO/VISAO-COMP/sentinel-cv/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/josemberg/Documentos/MESTRADO/VISAO-COMP/sentinel-cv
+plugins: anyio-4.16.0
+collecting ... collected 6 items
+
+tests/test_detector.py::test_geometria PASSED                            [ 16%]
+tests/test_detector.py::test_dimensoes_invalidas[dimensoes0] PASSED      [ 33%]
+tests/test_detector.py::test_dimensoes_invalidas[dimensoes1] PASSED      [ 50%]
+tests/test_detector.py::test_dimensoes_invalidas[dimensoes2] PASSED      [ 66%]
+tests/test_detector.py::test_sem_deteccoes PASSED                        [ 83%]
+tests/test_detector.py::test_deteccao_e_falha_propagada PASSED           [100%]
+
+============================== 6 passed in 1.08s ===============================

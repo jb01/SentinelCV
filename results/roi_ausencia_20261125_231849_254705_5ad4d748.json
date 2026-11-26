@@ -1,0 +1,49 @@
+{
+  "cenario": "roi_ausencia",
+  "parametros": {
+    "modelo_yolo": "yolo26n.pt",
+    "resolucao_inferencia": 320,
+    "resolucao_captura": [
+      640.0,
+      480.0
+    ],
+    "confianca_minima": 0.5,
+    "dispositivo": "cpu",
+    "roi": [
+      0.15,
+      0.2,
+      0.85,
+      1.0
+    ],
+    "area_relativa_minima": 0.15,
+    "filtragem_geometrica_ativa": true,
+    "versoes": {
+      "python": "3.14.4",
+      "opencv": "5.1.0",
+      "pytorch": "2.15.0+cpu",
+      "ultralytics": "8.4.218"
+    }
+  },
+  "duracao_solicitada_s": 30.0,
+  "aquecimento_s": 5.0,
+  "total_quadros": 897,
+  "duracao_efetiva_s": 30.015070766999997,
+  "fps_medio": 29.884987010798742,
+  "fps_instantaneo_minimo": 24.168527139646233,
+  "fps_instantaneo_maximo": 39.120153325787186,
+  "latencia_media_ms": 13.378164447041515,
+  "latencia_mediana_ms": 13.463248999869393,
+  "latencia_minima_ms": 10.887262999858649,
+  "latencia_maxima_ms": 23.155583000061597,
+  "latencia_percentil_95_ms": 14.73448600008851,
+  "latencia_desvio_padrao_ms": 1.0630660943660752,
+  "confianca_media": 0.5983192548432757,
+  "quadros_com_presenca_bruta": 269,
+  "percentual_quadros_com_presenca_bruta": 29.988851727982162,
+  "quadros_com_presenca_valida": 17,
+  "percentual_quadros_com_presenca_valida": 1.89520624303233,
+  "quadros_com_presenca": 269,
+  "quadros_sem_presenca": 628,
+  "percentual_quadros_com_presenca": 29.988851727982162,
+  "motivo_encerramento": "duracao_concluida"
+}

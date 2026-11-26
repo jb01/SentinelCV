@@ -68,3 +68,24 @@ def test_exportacao_unica_e_confianca_ausente(coletor: MetricsCollector, tmp_pat
 def test_duracao_invalida(duracao: float) -> None:
     with pytest.raises(ValueError):
         MetricsCollector(duracao, "teste", {})
+
+
+def test_exportacao_filtragem(coletor: MetricsCollector, tmp_path) -> None:
+    """Preserva os dados individuais e distingue presença bruta da válida."""
+    detalhes = [{"coordenadas_xywhn": (0.1, 0.1, 0.1, 0.1), "area_relativa": 0.01,
+                 "confianca": 0.8, "motivos_descarte": ["area_insuficiente", "centro_fora_roi"]}]
+    coletor.registrar(1, 105, 106, 10, [0.8], detalhes)
+    coletor.registrar(2, 106, 107, 10, [], [])
+    csv_path, json_path = coletor.exportar(tmp_path)
+    with csv_path.open(encoding="utf-8", newline="") as arquivo:
+        linhas = list(csv.DictReader(arquivo))
+    assert linhas[0]["deteccoes_descartadas"] == "1"
+    assert linhas[0]["presenca_bruta"] == "True"
+    assert linhas[0]["presenca_valida"] == "False"
+    assert json.loads(linhas[0]["detalhes_deteccoes"])[0]["motivos_descarte"] == detalhes[0]["motivos_descarte"]
+    assert linhas[1]["maior_area_relativa"] == ""
+    resumo = json.loads(json_path.read_text(encoding="utf-8"))
+    assert resumo["quadros_com_presenca_bruta"] == 1
+    assert resumo["percentual_quadros_com_presenca_bruta"] == 50
+    assert resumo["quadros_com_presenca_valida"] == 0
+    assert resumo["percentual_quadros_com_presenca_valida"] == 0

@@ -14,6 +14,7 @@ import ultralytics
 from src.camera import Camera
 from src.detector import Detector
 from src.metrics import MetricsCollector
+from src.roi import FiltroPresenca, ROI
 
 
 def main() -> int:
@@ -22,7 +23,15 @@ def main() -> int:
     parser.add_argument("--benchmark", action="store_true", help="coleta métricas experimentais")
     parser.add_argument("--duration", type=float, default=60.0, help="duração útil da coleta em segundos")
     parser.add_argument("--scenario", default="cenario", help="identificador do cenário experimental")
+    parser.add_argument("--min-area", type=float, default=0.15, help="área relativa mínima (0 a 1)")
+    parser.add_argument("--roi", type=float, nargs=4, metavar=("XMIN", "YMIN", "XMAX", "YMAX"),
+                        default=(0.15, 0.20, 0.85, 1.0), help="limites normalizados da ROI")
+    parser.add_argument("--no-roi", action="store_true", help="desabilita a filtragem geométrica")
     args = parser.parse_args()
+    try:
+        filtro = FiltroPresenca(ROI(*args.roi), args.min_area, not args.no_roi)
+    except ValueError as erro:
+        parser.error(str(erro))
     if args.benchmark and (not 0 < args.duration < float("inf")):
         parser.error("--duration deve ser um número positivo e finito")
     camera = Camera()
@@ -41,6 +50,9 @@ def main() -> int:
                 "resolucao_captura": [largura, altura],
                 "confianca_minima": detector.confianca_minima,
                 "dispositivo": detector.dispositivo,
+                "roi": list(args.roi),
+                "area_relativa_minima": filtro.min_area,
+                "filtragem_geometrica_ativa": filtro.habilitado,
                 "versoes": {"python": platform.python_version(), "opencv": cv2.__version__,
                             "pytorch": torch.__version__, "ultralytics": ultralytics.__version__},
             })
@@ -53,12 +65,26 @@ def main() -> int:
             quadro = camera.ler()
             numero_quadro += 1
             deteccoes = detector.detectar(quadro)
+            altura_quadro, largura_quadro = quadro.shape[:2]
+            validas, descartadas = filtro.classificar(deteccoes, largura_quadro, altura_quadro)
+            detalhes = []
+            if filtro.habilitado:
+                roi = filtro.roi
+                cv2.rectangle(quadro, (int(roi.xmin * largura_quadro), int(roi.ymin * altura_quadro)),
+                              (min(largura_quadro - 1, int(roi.xmax * largura_quadro)),
+                               min(altura_quadro - 1, int(roi.ymax * altura_quadro))), (255, 0, 0), 2)
             for deteccao in deteccoes:
+                motivos = filtro.motivos_descarte(deteccao, largura_quadro, altura_quadro)
+                area = deteccao.area_relativa(largura_quadro, altura_quadro)
+                detalhes.append({"coordenadas_xywhn": deteccao.coordenadas_normalizadas(largura_quadro, altura_quadro),
+                                 "area_relativa": area, "confianca": deteccao.confianca,
+                                 "motivos_descarte": motivos})
+                cor = (128, 128, 128) if motivos else (0, 255, 0)
                 x1, y1, x2, y2 = map(int, (deteccao.x1, deteccao.y1, deteccao.x2, deteccao.y2))
-                cv2.rectangle(quadro, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                cv2.putText(quadro, f"Pessoa {deteccao.confianca:.0%}",
-                            (x1, max(20, y1 - 8)), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.6, (0, 255, 0), 2)
+                cv2.rectangle(quadro, (x1, y1), (x2, y2), cor, 2)
+                cv2.circle(quadro, tuple(map(int, deteccao.centro)), 4, cor, -1)
+                cv2.putText(quadro, f"Pessoa {deteccao.confianca:.0%} Area {area:.1%}",
+                            (x1, max(20, y1 - 8)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, cor, 2)
             agora = time.perf_counter()
             intervalos.append(agora - anterior)
             anterior = agora
@@ -67,11 +93,12 @@ def main() -> int:
                 (f"FPS: {fps_efetivo:.1f}", (255, 255, 255)),
                 (f"Deteccao: {detector.latencia_ms:.1f} ms", (255, 255, 255)),
                 (f"Pessoas: {len(deteccoes)}", (255, 255, 255)),
-                ("PRESENCA DETECTADA" if deteccoes else "AUSENCIA DETECTADA",
-                 (0, 255, 0) if deteccoes else (0, 0, 255)),
+                (f"Validas: {len(validas)}  Descartadas: {len(descartadas)}", (255, 255, 255)),
+                ("PRESENCA VALIDA" if validas else "AUSENCIA VALIDA",
+                 (0, 255, 0) if validas else (0, 0, 255)),
             ]
             # Faixa opaca mantém os indicadores legíveis sobre a imagem e as caixas.
-            cv2.rectangle(quadro, (0, 0), (min(quadro.shape[1] - 1, 330), 112), (0, 0, 0), -1)
+            cv2.rectangle(quadro, (0, 0), (min(quadro.shape[1] - 1, 400), 140), (0, 0, 0), -1)
             for indice, (texto, cor) in enumerate(indicadores):
                 cv2.putText(quadro, texto, (10, 23 + indice * 27),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, cor, 2)
@@ -80,7 +107,7 @@ def main() -> int:
             fim_quadro = time.perf_counter()
             concluido = metricas.registrar(
                 numero_quadro, inicio_quadro, fim_quadro, detector.latencia_ms,
-                [d.confianca for d in deteccoes],
+                [d.confianca for d in deteccoes], detalhes,
             ) if metricas else False
             if tecla in (ord("q"), ord("Q")):
                 motivo = "interrompido_pelo_usuario"

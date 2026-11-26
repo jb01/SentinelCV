@@ -38,3 +38,16 @@ Para coletar métricas, execute, por exemplo:
 A duração é em segundos e vale para a coleta após cinco segundos de aquecimento. O experimento encerra automaticamente após um quadro completo atingir a duração; Q encerra antes e exporta os dados parciais. Cada execução produz um CSV e um JSON com nomes exclusivos em `results/`. Use identificadores de cenário sem dados pessoais. O JSON registra o motivo do encerramento e os parâmetros e versões do ambiente.
 
 O tempo de processamento de cada quadro inclui captura, inferência, desenho, exibição e espera da tecla. O FPS instantâneo é o inverso desse tempo; o FPS médio é o número de amostras dividido pelo tempo decorrido entre o início do primeiro e o fim do último quadro coletado. A duração efetiva pode ultrapassar a solicitada pelo tempo do último quadro. O percentil 95 usa interpolação linear e o desvio padrão é populacional. A confiança média considera a maior confiança de cada quadro com presença; quadros sem detecção têm confiança vazia no CSV. Caso não haja amostras, estatísticas indefinidas aparecem como `null` no JSON.
+
+## Filtragem geométrica
+
+Por padrão, uma pessoa é considerada válida quando sua caixa ocupa pelo menos 15% do quadro e seu centro está dentro da ROI normalizada `(0.15, 0.20, 0.85, 1.00)`, incluindo as bordas. A ROI é desenhada em azul, as caixas válidas em verde e as descartadas em cinza. A área é uma proporção da imagem, não uma estimativa de distância física.
+
+```bash
+.venv/bin/python main.py --min-area 0.15 --roi 0.15 0.20 0.85 1.00
+.venv/bin/python main.py --no-roi
+.venv/bin/python main.py --benchmark --duration 30 --scenario filtrado
+.venv/bin/python main.py --benchmark --duration 30 --scenario baseline --no-roi
+```
+
+`--no-roi` desativa os dois critérios geométricos; o detector continua restrito à classe pessoa. O JSON registra os parâmetros e as taxas de presença bruta e válida. No CSV, `detalhes_deteccoes` é uma lista JSON, na ordem das detecções, com coordenadas normalizadas `xywhn` (centro, largura, altura), área relativa, confiança e lista de motivos de descarte. As estatísticas anteriores de presença e confiança continuam se referindo às detecções brutas. Uma lista vazia de motivos indica detecção válida. Experimentos anteriores não são alterados.

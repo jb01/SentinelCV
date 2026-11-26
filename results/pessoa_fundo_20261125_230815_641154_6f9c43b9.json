@@ -1,0 +1,37 @@
+{
+  "cenario": "pessoa_fundo",
+  "parametros": {
+    "modelo_yolo": "yolo26n.pt",
+    "resolucao_inferencia": 320,
+    "resolucao_captura": [
+      640.0,
+      480.0
+    ],
+    "confianca_minima": 0.5,
+    "dispositivo": "cpu",
+    "versoes": {
+      "python": "3.14.4",
+      "opencv": "5.1.0",
+      "pytorch": "2.15.0+cpu",
+      "ultralytics": "8.4.218"
+    }
+  },
+  "duracao_solicitada_s": 30.0,
+  "aquecimento_s": 5.0,
+  "total_quadros": 897,
+  "duracao_efetiva_s": 30.013843035000264,
+  "fps_medio": 29.886209471875187,
+  "fps_instantaneo_minimo": 21.907258163703116,
+  "fps_instantaneo_maximo": 38.453829947331506,
+  "latencia_media_ms": 13.70908562653429,
+  "latencia_mediana_ms": 13.752256000316265,
+  "latencia_minima_ms": 11.104682000222965,
+  "latencia_maxima_ms": 23.54739900010827,
+  "latencia_percentil_95_ms": 15.453134800009138,
+  "latencia_desvio_padrao_ms": 1.2126651313640544,
+  "confianca_media": 0.8274575150929965,
+  "quadros_com_presenca": 702,
+  "quadros_sem_presenca": 195,
+  "percentual_quadros_com_presenca": 78.26086956521739,
+  "motivo_encerramento": "duracao_concluida"
+}

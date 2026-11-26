@@ -62,3 +62,23 @@ O temporizador começa na primeira inferência sem presença válida, inclusive 
 ```
 
 Nos novos CSVs, `solicitacao_bloqueio` indica o quadro do evento e `instante_solicitacao_s` registra o instante em segundos desde o início do benchmark, inclusive durante o aquecimento. O instante permanece disponível nos quadros posteriores até a reinicialização. O tempo de ausência para de crescer na solicitação. O benchmark continua após o bloqueio simulado.
+
+## Bloqueio de sessão
+
+Por padrão, o bloqueio permanece simulado:
+
+```bash
+.venv/bin/python main.py --absence-time 10
+```
+
+Para habilitar explicitamente uma solicitação real na sessão gráfica que executa a aplicação:
+
+```bash
+.venv/bin/python main.py --lock-enabled --absence-time 10
+```
+
+Após o limite, a aplicação executa `loginctl lock-session`, consulta `LockedHint` da mesma sessão e libera a câmera antes de encerrar. Um retorno bem-sucedido indica que a solicitação foi aceita; a consulta imediata pode não confirmar que a tela efetivamente bloqueou. Inicie a aplicação novamente depois de desbloquear a sessão. Em caso de falha de captura ou inferência, é feita uma única solicitação preventiva; em simulação, ela também é simulada. `--lock-enabled` não pode ser usado com `--benchmark`. Os eventos operacionais são gravados em `logs/sentinelcv.log`.
+
+Valide primeiro em modo simulado, incluindo o retorno antes do prazo. Para validar o modo real, execute-o de um terminal da própria sessão gráfica e afaste-se até o limite; confira se a tela realmente bloqueou e se a câmera foi liberada. A aceitação do comando ou `LockedHint` isoladamente não substitui essa verificação funcional.
+
+Referência técnica: [documentação oficial do loginctl](https://www.freedesktop.org/software/systemd/man/latest/loginctl.html).

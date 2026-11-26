@@ -3,6 +3,8 @@
 import argparse
 from collections import deque
 import json
+import logging
+from pathlib import Path
 import platform
 import sys
 import time
@@ -16,6 +18,32 @@ from src.detector import Detector
 from src.metrics import MetricsCollector
 from src.presence import ControladorPresenca, EstadoPresenca
 from src.roi import FiltroPresenca, ROI
+from src.screen_lock import BloqueadorSessao
+
+
+def configurar_log() -> logging.Logger:
+    """Configura registro local de eventos sem informações pessoais."""
+    Path("logs").mkdir(exist_ok=True)
+    logger = logging.getLogger("sentinelcv")
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
+    if not logger.handlers:
+        handler = logging.FileHandler("logs/sentinelcv.log", encoding="utf-8")
+        handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
+        logger.addHandler(handler)
+    return logger
+
+
+def registrar_evento(logger: logging.Logger, tipo: str, anterior: EstadoPresenca,
+                     controlador: ControladorPresenca, modo: str, resultado=None,
+                     ausencia: float | None = None) -> None:
+    """Registra somente dados operacionais estruturados."""
+    logger.info(json.dumps({"evento": tipo, "estado_anterior": anterior.name,
+                            "novo_estado": controlador.estado.name,
+                            "tempo_ausencia_s": controlador.tempo_ausencia if ausencia is None else ausencia,
+                            "limite_s": controlador.tempo_limite, "modo": modo,
+                            "resultado": resultado.mensagem if resultado else None,
+                            "latencia_ms": resultado.latencia_ms if resultado else None}, ensure_ascii=False))
 
 
 def main() -> int:
@@ -29,7 +57,10 @@ def main() -> int:
                         default=(0.15, 0.20, 0.85, 1.0), help="limites normalizados da ROI")
     parser.add_argument("--no-roi", action="store_true", help="desabilita a filtragem geométrica")
     parser.add_argument("--absence-time", type=float, default=10.0, help="limite de ausência em segundos")
+    parser.add_argument("--lock-enabled", action="store_true", help="ativa solicitação real de bloqueio")
     args = parser.parse_args()
+    if args.benchmark and args.lock_enabled:
+        parser.error("--benchmark é incompatível com --lock-enabled")
     try:
         filtro = FiltroPresenca(ROI(*args.roi), args.min_area, not args.no_roi)
         controlador = ControladorPresenca(args.absence_time, relogio=time.perf_counter)
@@ -38,10 +69,18 @@ def main() -> int:
     if args.benchmark and (not 0 < args.duration < float("inf")):
         parser.error("--duration deve ser um número positivo e finito")
     camera = Camera()
+    bloqueador = BloqueadorSessao(modo_simulado=not args.lock_enabled)
+    modo = "real" if args.lock_enabled else "simulacao"
+    logger = configurar_log()
+    registrar_evento(logger, "inicio", controlador.estado, controlador, modo)
+    etapa = "inicializacao"
+    acao_executada = False
     metricas = None
     motivo = "erro"
     try:
+        etapa = "inferencia"
         detector = Detector()
+        etapa = "captura"
         camera.abrir()
         largura, altura, fps, formato = camera.parametros()
         print(f"Parâmetros informados pela câmera: {largura:g} x {altura:g}, "
@@ -66,16 +105,35 @@ def main() -> int:
         anterior = time.perf_counter()
         while True:
             inicio_quadro = time.perf_counter()
+            etapa = "captura"
             quadro = camera.ler()
             numero_quadro += 1
+            etapa = "inferencia"
             deteccoes = detector.detectar(quadro)
+            etapa = "processamento"
             altura_quadro, largura_quadro = quadro.shape[:2]
             validas, descartadas = filtro.classificar(deteccoes, largura_quadro, altura_quadro)
+            anterior_estado = controlador.estado
             controlador.atualizar(bool(validas))
+            if anterior_estado != controlador.estado:
+                registrar_evento(logger, "transicao_presenca", anterior_estado, controlador, modo)
             solicitacao = controlador.solicitar_bloqueio
             if solicitacao:
-                print("BLOQUEIO SIMULADO: limite de ausência atingido. Pressione R para reinicializar.", flush=True)
-                controlador.confirmar_bloqueio()
+                acao_executada = True
+                resultado = bloqueador.bloquear()
+                anterior_estado = controlador.estado
+                if not resultado.sucesso_solicitacao:
+                    ausencia = controlador.tempo_ausencia
+                    controlador.registrar_erro("falha na solicitação de bloqueio")
+                    registrar_evento(logger, "falha_bloqueio", anterior_estado, controlador, modo, resultado, ausencia)
+                    print(f"Erro de bloqueio: {resultado.mensagem}", file=sys.stderr)
+                    return 1
+                if resultado.modo_simulado:
+                    controlador.confirmar_bloqueio()
+                registrar_evento(logger, "solicitacao_bloqueio", anterior_estado, controlador, modo, resultado)
+                print(resultado.mensagem, flush=True)
+                if not resultado.modo_simulado:
+                    return 0
             tempo_ausencia = controlador.tempo_ausencia
             tempo_restante = controlador.tempo_restante
             detalhes = []
@@ -104,6 +162,7 @@ def main() -> int:
                           (0, 255, 255) if controlador.estado == EstadoPresenca.AUSENCIA_TEMPORARIA else
                           (0, 0, 255))
             indicadores = [
+                ("BLOQUEIO REAL ATIVO" if args.lock_enabled else "MODO SIMULACAO", (255, 255, 255)),
                 (f"FPS: {fps_efetivo:.1f}  Deteccao: {detector.latencia_ms:.1f} ms", (255, 255, 255)),
                 (f"Pessoas: {len(deteccoes)}  Validas: {len(validas)}  Descartadas: {len(descartadas)}", (255, 255, 255)),
                 (f"Presenca bruta: {'SIM' if deteccoes else 'NAO'}  Valida: {'SIM' if validas else 'NAO'}", (255, 255, 255)),
@@ -112,15 +171,15 @@ def main() -> int:
                 ("BLOQUEIO SIMULADO - R reinicia" if controlador.estado == EstadoPresenca.BLOQUEADO
                  else f"Contagem regressiva: {tempo_restante:.1f}s", cor_estado),
             ]
-            cv2.rectangle(quadro, (0, 0), (min(largura_quadro - 1, 500), 175), (0, 0, 0), -1)
+            cv2.rectangle(quadro, (0, 0), (min(largura_quadro - 1, 500), 198), (0, 0, 0), -1)
             for indice, (texto, cor) in enumerate(indicadores):
                 cv2.putText(quadro, texto, (10, 21 + indice * 23),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.52, cor, 1)
             barra_largura = min(300, max(0, largura_quadro - 22))
             progresso = min(1.0, tempo_ausencia / controlador.tempo_limite)
-            cv2.rectangle(quadro, (10, 151), (10 + barra_largura, 164), (220, 220, 220), 1)
+            cv2.rectangle(quadro, (10, 174), (10 + barra_largura, 187), (220, 220, 220), 1)
             if progresso > 0:
-                cv2.rectangle(quadro, (11, 152), (10 + int(barra_largura * progresso), 163), cor_estado, -1)
+                cv2.rectangle(quadro, (11, 175), (10 + int(barra_largura * progresso), 186), cor_estado, -1)
             cv2.imshow("SentinelCV", quadro)
             tecla = cv2.waitKey(1) & 0xFF
             fim_quadro = time.perf_counter()
@@ -133,7 +192,11 @@ def main() -> int:
                                          if controlador.instante_solicitacao is not None else None),
             ) if metricas else False
             if tecla in (ord("r"), ord("R")):
+                anterior_estado = controlador.estado
                 controlador.reinicializar()
+                bloqueador.reinicializar()
+                acao_executada = False
+                registrar_evento(logger, "reinicializacao", anterior_estado, controlador, modo)
                 print("Controlador de presença reinicializado.", flush=True)
             if tecla in (ord("q"), ord("Q")):
                 motivo = "interrompido_pelo_usuario"
@@ -143,8 +206,15 @@ def main() -> int:
                 break
         return 0
     except Exception as erro:
-        controlador.registrar_erro(str(erro))
-        print(f"Erro: {erro}", file=sys.stderr)
+        anterior_estado = controlador.estado
+        ausencia = controlador.tempo_ausencia
+        controlador.registrar_erro(f"falha de {etapa}")
+        registrar_evento(logger, f"falha_{etapa}", anterior_estado, controlador, modo, ausencia=ausencia)
+        print(f"Erro de {etapa}: {erro}", file=sys.stderr)
+        if etapa in ("captura", "inferencia") and not acao_executada:
+            resultado = bloqueador.bloquear()
+            registrar_evento(logger, "bloqueio_preventivo", controlador.estado, controlador, modo, resultado, ausencia)
+            print(f"Bloqueio preventivo: {resultado.mensagem}", file=sys.stderr)
         return 1
     finally:
         try:

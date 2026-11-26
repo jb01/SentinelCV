@@ -12,7 +12,7 @@ def caixa(x1, y1, x2, y2, classe=0):
 
 
 def test_area_e_posicao():
-    filtro = FiltroPresenca()
+    filtro = FiltroPresenca(min_area=0.15)
     dentro = caixa(25, 25, 75, 75)
     fora = caixa(0, 0, 20, 20)
     pequena = caixa(45, 45, 55, 55)
@@ -57,3 +57,10 @@ def test_roi_invalida(coordenadas):
 def test_area_invalida(area):
     with pytest.raises(ValueError):
         FiltroPresenca(min_area=area)
+
+
+def test_area_padrao_vinte_por_cento():
+    filtro = FiltroPresenca()
+    abaixo = caixa(25, 35, 75, 74)
+    limite = caixa(25, 30, 75, 70)
+    assert filtro.classificar([abaixo, limite], 100, 100) == ([limite], [abaixo])

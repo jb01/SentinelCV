@@ -28,7 +28,7 @@ class ROI:
 class FiltroPresenca:
     """Classifica detecções sem alterar nem remover as caixas originais."""
 
-    def __init__(self, roi: ROI | None = None, min_area: float = 0.15,
+    def __init__(self, roi: ROI | None = None, min_area: float = 0.20,
                  habilitado: bool = True) -> None:
         """Define a região, a área relativa mínima e o estado da filtragem."""
         if not math.isfinite(min_area) or not 0 <= min_area <= 1:

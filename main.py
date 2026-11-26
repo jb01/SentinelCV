@@ -14,6 +14,7 @@ import ultralytics
 from src.camera import Camera
 from src.detector import Detector
 from src.metrics import MetricsCollector
+from src.presence import ControladorPresenca, EstadoPresenca
 from src.roi import FiltroPresenca, ROI
 
 
@@ -23,13 +24,15 @@ def main() -> int:
     parser.add_argument("--benchmark", action="store_true", help="coleta métricas experimentais")
     parser.add_argument("--duration", type=float, default=60.0, help="duração útil da coleta em segundos")
     parser.add_argument("--scenario", default="cenario", help="identificador do cenário experimental")
-    parser.add_argument("--min-area", type=float, default=0.15, help="área relativa mínima (0 a 1)")
+    parser.add_argument("--min-area", type=float, default=0.20, help="área relativa mínima (0 a 1)")
     parser.add_argument("--roi", type=float, nargs=4, metavar=("XMIN", "YMIN", "XMAX", "YMAX"),
                         default=(0.15, 0.20, 0.85, 1.0), help="limites normalizados da ROI")
     parser.add_argument("--no-roi", action="store_true", help="desabilita a filtragem geométrica")
+    parser.add_argument("--absence-time", type=float, default=10.0, help="limite de ausência em segundos")
     args = parser.parse_args()
     try:
         filtro = FiltroPresenca(ROI(*args.roi), args.min_area, not args.no_roi)
+        controlador = ControladorPresenca(args.absence_time, relogio=time.perf_counter)
     except ValueError as erro:
         parser.error(str(erro))
     if args.benchmark and (not 0 < args.duration < float("inf")):
@@ -53,6 +56,7 @@ def main() -> int:
                 "roi": list(args.roi),
                 "area_relativa_minima": filtro.min_area,
                 "filtragem_geometrica_ativa": filtro.habilitado,
+                "tempo_limite_ausencia_s": controlador.tempo_limite,
                 "versoes": {"python": platform.python_version(), "opencv": cv2.__version__,
                             "pytorch": torch.__version__, "ultralytics": ultralytics.__version__},
             })
@@ -67,6 +71,13 @@ def main() -> int:
             deteccoes = detector.detectar(quadro)
             altura_quadro, largura_quadro = quadro.shape[:2]
             validas, descartadas = filtro.classificar(deteccoes, largura_quadro, altura_quadro)
+            controlador.atualizar(bool(validas))
+            solicitacao = controlador.solicitar_bloqueio
+            if solicitacao:
+                print("BLOQUEIO SIMULADO: limite de ausência atingido. Pressione R para reinicializar.", flush=True)
+                controlador.confirmar_bloqueio()
+            tempo_ausencia = controlador.tempo_ausencia
+            tempo_restante = controlador.tempo_restante
             detalhes = []
             if filtro.habilitado:
                 roi = filtro.roi
@@ -89,26 +100,41 @@ def main() -> int:
             intervalos.append(agora - anterior)
             anterior = agora
             fps_efetivo = len(intervalos) / sum(intervalos) if sum(intervalos) > 0 else 0.0
+            cor_estado = ((0, 255, 0) if controlador.estado == EstadoPresenca.PRESENTE else
+                          (0, 255, 255) if controlador.estado == EstadoPresenca.AUSENCIA_TEMPORARIA else
+                          (0, 0, 255))
             indicadores = [
-                (f"FPS: {fps_efetivo:.1f}", (255, 255, 255)),
-                (f"Deteccao: {detector.latencia_ms:.1f} ms", (255, 255, 255)),
-                (f"Pessoas: {len(deteccoes)}", (255, 255, 255)),
-                (f"Validas: {len(validas)}  Descartadas: {len(descartadas)}", (255, 255, 255)),
-                ("PRESENCA VALIDA" if validas else "AUSENCIA VALIDA",
-                 (0, 255, 0) if validas else (0, 0, 255)),
+                (f"FPS: {fps_efetivo:.1f}  Deteccao: {detector.latencia_ms:.1f} ms", (255, 255, 255)),
+                (f"Pessoas: {len(deteccoes)}  Validas: {len(validas)}  Descartadas: {len(descartadas)}", (255, 255, 255)),
+                (f"Presenca bruta: {'SIM' if deteccoes else 'NAO'}  Valida: {'SIM' if validas else 'NAO'}", (255, 255, 255)),
+                (f"Estado: {controlador.estado.name}", cor_estado),
+                (f"Ausencia: {tempo_ausencia:.1f}s  Restante: {tempo_restante:.1f}s", cor_estado),
+                ("BLOQUEIO SIMULADO - R reinicia" if controlador.estado == EstadoPresenca.BLOQUEADO
+                 else f"Contagem regressiva: {tempo_restante:.1f}s", cor_estado),
             ]
-            # Faixa opaca mantém os indicadores legíveis sobre a imagem e as caixas.
-            cv2.rectangle(quadro, (0, 0), (min(quadro.shape[1] - 1, 400), 140), (0, 0, 0), -1)
+            cv2.rectangle(quadro, (0, 0), (min(largura_quadro - 1, 500), 175), (0, 0, 0), -1)
             for indice, (texto, cor) in enumerate(indicadores):
-                cv2.putText(quadro, texto, (10, 23 + indice * 27),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, cor, 2)
+                cv2.putText(quadro, texto, (10, 21 + indice * 23),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.52, cor, 1)
+            barra_largura = min(300, max(0, largura_quadro - 22))
+            progresso = min(1.0, tempo_ausencia / controlador.tempo_limite)
+            cv2.rectangle(quadro, (10, 151), (10 + barra_largura, 164), (220, 220, 220), 1)
+            if progresso > 0:
+                cv2.rectangle(quadro, (11, 152), (10 + int(barra_largura * progresso), 163), cor_estado, -1)
             cv2.imshow("SentinelCV", quadro)
             tecla = cv2.waitKey(1) & 0xFF
             fim_quadro = time.perf_counter()
             concluido = metricas.registrar(
                 numero_quadro, inicio_quadro, fim_quadro, detector.latencia_ms,
                 [d.confianca for d in deteccoes], detalhes,
+                estado_presenca=controlador.estado.name, tempo_ausencia_s=tempo_ausencia,
+                solicitacao_bloqueio=solicitacao,
+                instante_solicitacao_s=(controlador.instante_solicitacao - metricas.inicio
+                                         if controlador.instante_solicitacao is not None else None),
             ) if metricas else False
+            if tecla in (ord("r"), ord("R")):
+                controlador.reinicializar()
+                print("Controlador de presença reinicializado.", flush=True)
             if tecla in (ord("q"), ord("Q")):
                 motivo = "interrompido_pelo_usuario"
                 break
@@ -117,6 +143,7 @@ def main() -> int:
                 break
         return 0
     except Exception as erro:
+        controlador.registrar_erro(str(erro))
         print(f"Erro: {erro}", file=sys.stderr)
         return 1
     finally:

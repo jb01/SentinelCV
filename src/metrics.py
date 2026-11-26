@@ -29,7 +29,9 @@ class MetricsCollector:
         self.fim_coleta: float | None = None
 
     def registrar(self, numero: int, inicio: float, fim: float, latencia_ms: float,
-                  confiancas: list[float], detalhes: list[dict] | None = None) -> bool:
+                  confiancas: list[float], detalhes: list[dict] | None = None,
+                  estado_presenca: str | None = None, tempo_ausencia_s: float | None = None,
+                  solicitacao_bloqueio: bool = False, instante_solicitacao_s: float | None = None) -> bool:
         """Registra o quadro se iniciado após aquecimento; indica fim da coleta."""
         if inicio - self.inicio < self.aquecimento:
             return False
@@ -57,6 +59,10 @@ class MetricsCollector:
             "presenca_bruta": bool(confiancas),
             "presenca_valida": validas > 0,
             "maior_area_relativa": max(areas) if areas else None,
+            "estado_presenca": estado_presenca,
+            "tempo_ausencia_s": tempo_ausencia_s,
+            "solicitacao_bloqueio": solicitacao_bloqueio,
+            "instante_solicitacao_s": instante_solicitacao_s,
             "detalhes_deteccoes": json.dumps(detalhes if detalhes is not None else [], ensure_ascii=False),
         })
         return fim - self.inicio_coleta >= self.duracao
@@ -107,7 +113,8 @@ class MetricsCollector:
                   "tempo_processamento_s", "fps_instantaneo", "quantidade_pessoas",
                   "presenca", "maior_confianca", "total_deteccoes", "deteccoes_validas",
                   "deteccoes_descartadas", "presenca_bruta", "presenca_valida",
-                  "maior_area_relativa", "detalhes_deteccoes"]
+                  "maior_area_relativa", "detalhes_deteccoes", "estado_presenca",
+                  "tempo_ausencia_s", "solicitacao_bloqueio", "instante_solicitacao_s"]
         with csv_path.open("x", newline="", encoding="utf-8") as arquivo:
             escritor = csv.DictWriter(arquivo, fieldnames=campos)
             escritor.writeheader()

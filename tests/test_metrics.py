@@ -89,3 +89,16 @@ def test_exportacao_filtragem(coletor: MetricsCollector, tmp_path) -> None:
     assert resumo["percentual_quadros_com_presenca_bruta"] == 50
     assert resumo["quadros_com_presenca_valida"] == 0
     assert resumo["percentual_quadros_com_presenca_valida"] == 0
+
+
+def test_exporta_estado_e_evento(coletor: MetricsCollector, tmp_path) -> None:
+    coletor.registrar(1, 105, 106, 10, [], [], estado_presenca="BLOQUEADO",
+                      tempo_ausencia_s=10, solicitacao_bloqueio=True,
+                      instante_solicitacao_s=5.5)
+    csv_path, _ = coletor.exportar(tmp_path)
+    with csv_path.open(encoding="utf-8", newline="") as arquivo:
+        linha = next(csv.DictReader(arquivo))
+    assert linha["estado_presenca"] == "BLOQUEADO"
+    assert linha["tempo_ausencia_s"] == "10"
+    assert linha["solicitacao_bloqueio"] == "True"
+    assert linha["instante_solicitacao_s"] == "5.5"

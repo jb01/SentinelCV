@@ -41,13 +41,24 @@ O tempo de processamento de cada quadro inclui captura, inferência, desenho, ex
 
 ## Filtragem geométrica
 
-Por padrão, uma pessoa é considerada válida quando sua caixa ocupa pelo menos 15% do quadro e seu centro está dentro da ROI normalizada `(0.15, 0.20, 0.85, 1.00)`, incluindo as bordas. A ROI é desenhada em azul, as caixas válidas em verde e as descartadas em cinza. A área é uma proporção da imagem, não uma estimativa de distância física.
+Por padrão, uma pessoa é considerada válida quando sua caixa ocupa pelo menos 20% do quadro e seu centro está dentro da ROI normalizada `(0.15, 0.20, 0.85, 1.00)`, incluindo as bordas. A ROI é desenhada em azul, as caixas válidas em verde e as descartadas em cinza. A área é uma proporção da imagem, não uma estimativa de distância física.
 
 ```bash
-.venv/bin/python main.py --min-area 0.15 --roi 0.15 0.20 0.85 1.00
+.venv/bin/python main.py --min-area 0.20 --roi 0.15 0.20 0.85 1.00
 .venv/bin/python main.py --no-roi
 .venv/bin/python main.py --benchmark --duration 30 --scenario filtrado
 .venv/bin/python main.py --benchmark --duration 30 --scenario baseline --no-roi
 ```
 
 `--no-roi` desativa os dois critérios geométricos; o detector continua restrito à classe pessoa. O JSON registra os parâmetros e as taxas de presença bruta e válida. No CSV, `detalhes_deteccoes` é uma lista JSON, na ordem das detecções, com coordenadas normalizadas `xywhn` (centro, largura, altura), área relativa, confiança e lista de motivos de descarte. As estatísticas anteriores de presença e confiança continuam se referindo às detecções brutas. Uma lista vazia de motivos indica detecção válida. Experimentos anteriores não são alterados.
+
+## Controle de presença simulado
+
+O temporizador começa na primeira inferência sem presença válida, inclusive durante o aquecimento do benchmark. Após 10 segundos contínuos (configuráveis com `--absence-time`), a aplicação registra `BLOQUEIO SIMULADO` e permanece nesse estado até a tecla **R** reinicializar o controlador. A tecla **Q** encerra a aplicação. Uma detecção descartada não reinicia o temporizador, e falhas são tratadas como erros. Nenhum bloqueio real é executado.
+
+```bash
+.venv/bin/python main.py --absence-time 10
+.venv/bin/python main.py --benchmark --duration 30 --scenario teste-presenca --absence-time 10
+```
+
+Nos novos CSVs, `solicitacao_bloqueio` indica o quadro do evento e `instante_solicitacao_s` registra o instante em segundos desde o início do benchmark, inclusive durante o aquecimento. O instante permanece disponível nos quadros posteriores até a reinicialização. O tempo de ausência para de crescer na solicitação. O benchmark continua após o bloqueio simulado.

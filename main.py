@@ -13,6 +13,8 @@ import cv2
 import torch
 import ultralytics
 
+from src.config import carregar_config, validar_config
+from src.interface import renderizar
 from src.camera import Camera
 from src.detector import Detector
 from src.metrics import MetricsCollector
@@ -21,16 +23,22 @@ from src.roi import FiltroPresenca, ROI
 from src.screen_lock import BloqueadorSessao
 
 
-def configurar_log() -> logging.Logger:
+def configurar_log(arquivo="logs/sentinelcv.log", habilitado=True) -> logging.Logger:
     """Configura registro local de eventos sem informações pessoais."""
-    Path("logs").mkdir(exist_ok=True)
+    if habilitado:
+        Path(arquivo).parent.mkdir(parents=True, exist_ok=True)
     logger = logging.getLogger("sentinelcv")
     logger.setLevel(logging.INFO)
     logger.propagate = False
-    if not logger.handlers:
-        handler = logging.FileHandler("logs/sentinelcv.log", encoding="utf-8")
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
+        handler.close()
+    if habilitado:
+        handler = logging.FileHandler(arquivo, encoding="utf-8")
         handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
         logger.addHandler(handler)
+    else:
+        logger.addHandler(logging.NullHandler())
     return logger
 
 
@@ -46,19 +54,42 @@ def registrar_evento(logger: logging.Logger, tipo: str, anterior: EstadoPresenca
                             "latencia_ms": resultado.latencia_ms if resultado else None}, ensure_ascii=False))
 
 
-def main() -> int:
-    """Executa a visualização até que a tecla Q seja pressionada."""
+def interpretar_argumentos(argv=None):
+    """Combina configuração validada e opções explícitas da CLI."""
     parser = argparse.ArgumentParser(description="SentinelCV: detecção de pessoas")
+    parser.add_argument("--config", default=Path(__file__).resolve().parent / "config.yaml", help="arquivo YAML de configuração")
     parser.add_argument("--benchmark", action="store_true", help="coleta métricas experimentais")
-    parser.add_argument("--duration", type=float, default=60.0, help="duração útil da coleta em segundos")
+    parser.add_argument("--duration", type=float, default=None, help="duração útil da coleta em segundos")
     parser.add_argument("--scenario", default="cenario", help="identificador do cenário experimental")
-    parser.add_argument("--min-area", type=float, default=0.20, help="área relativa mínima (0 a 1)")
+    parser.add_argument("--min-area", type=float, default=None, help="área relativa mínima (0 a 1)")
     parser.add_argument("--roi", type=float, nargs=4, metavar=("XMIN", "YMIN", "XMAX", "YMAX"),
-                        default=(0.15, 0.20, 0.85, 1.0), help="limites normalizados da ROI")
+                        default=None, help="limites normalizados da ROI")
     parser.add_argument("--no-roi", action="store_true", help="desabilita a filtragem geométrica")
-    parser.add_argument("--absence-time", type=float, default=10.0, help="limite de ausência em segundos")
+    parser.add_argument("--absence-time", type=float, default=None, help="limite de ausência em segundos")
     parser.add_argument("--lock-enabled", action="store_true", help="ativa solicitação real de bloqueio")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
+    try:
+        config = carregar_config(args.config)
+        if args.duration is not None:
+            config["benchmark"]["duration"] = args.duration
+        if args.min_area is not None:
+            config["roi"]["min_area"] = args.min_area
+        if args.roi is not None:
+            for chave, valor in zip(("xmin", "ymin", "xmax", "ymax"), args.roi):
+                config["roi"][chave] = valor
+        if args.no_roi:
+            config["roi"]["enabled"] = False
+        if args.absence_time is not None:
+            config["presence"]["absence_timeout"] = args.absence_time
+        config["security"]["lock_enabled"] = args.lock_enabled
+        validar_config(config)
+    except ValueError as erro:
+        parser.error(str(erro))
+    args.duration = config["benchmark"]["duration"]
+    args.min_area = config["roi"]["min_area"]
+    args.roi = [config["roi"][k] for k in ("xmin", "ymin", "xmax", "ymax")]
+    args.no_roi = not config["roi"]["enabled"]
+    args.absence_time = config["presence"]["absence_timeout"]
     if args.benchmark and args.lock_enabled:
         parser.error("--benchmark é incompatível com --lock-enabled")
     try:
@@ -68,10 +99,19 @@ def main() -> int:
         parser.error(str(erro))
     if args.benchmark and (not 0 < args.duration < float("inf")):
         parser.error("--duration deve ser um número positivo e finito")
-    camera = Camera()
+    return args, config
+
+
+def main() -> int:
+    """Executa a visualização até que a tecla Q seja pressionada."""
+    args, config = interpretar_argumentos()
+    filtro = FiltroPresenca(ROI(*args.roi), args.min_area, not args.no_roi)
+    controlador = ControladorPresenca(args.absence_time, relogio=time.perf_counter)
+    c = config["camera"]
+    camera = Camera(c["index"], c["width"], c["height"], c["fps"], c["codec"])
     bloqueador = BloqueadorSessao(modo_simulado=not args.lock_enabled)
-    modo = "real" if args.lock_enabled else "simulacao"
-    logger = configurar_log()
+    modo = "benchmark" if args.benchmark else "real" if args.lock_enabled else "simulacao"
+    logger = configurar_log(config["logging"]["file"], config["logging"]["enabled"])
     registrar_evento(logger, "inicio", controlador.estado, controlador, modo)
     etapa = "inicializacao"
     acao_executada = False
@@ -79,7 +119,8 @@ def main() -> int:
     motivo = "erro"
     try:
         etapa = "inferencia"
-        detector = Detector()
+        d = config["detector"]
+        detector = Detector(d["model"], d["device"], d["imgsz"], d["confidence"], d["classes"])
         etapa = "captura"
         camera.abrir()
         largura, altura, fps, formato = camera.parametros()
@@ -96,10 +137,12 @@ def main() -> int:
                 "area_relativa_minima": filtro.min_area,
                 "filtragem_geometrica_ativa": filtro.habilitado,
                 "tempo_limite_ausencia_s": controlador.tempo_limite,
+                "configuracao_efetiva": config,
                 "versoes": {"python": platform.python_version(), "opencv": cv2.__version__,
                             "pytorch": torch.__version__, "ultralytics": ultralytics.__version__},
-            })
-            print(f"Benchmark: 5 s de aquecimento e {args.duration:g} s de coleta.", flush=True)
+            }, aquecimento=config["benchmark"]["warmup"])
+            print(f"Benchmark: {config['benchmark']['warmup']:g} s de aquecimento e {args.duration:g} s de coleta.", flush=True)
+        ajuda = True
         numero_quadro = 0
         intervalos: deque[float] = deque(maxlen=30)
         anterior = time.perf_counter()
@@ -137,50 +180,25 @@ def main() -> int:
             tempo_ausencia = controlador.tempo_ausencia
             tempo_restante = controlador.tempo_restante
             detalhes = []
-            if filtro.habilitado:
-                roi = filtro.roi
-                cv2.rectangle(quadro, (int(roi.xmin * largura_quadro), int(roi.ymin * altura_quadro)),
-                              (min(largura_quadro - 1, int(roi.xmax * largura_quadro)),
-                               min(altura_quadro - 1, int(roi.ymax * altura_quadro))), (255, 0, 0), 2)
             for deteccao in deteccoes:
                 motivos = filtro.motivos_descarte(deteccao, largura_quadro, altura_quadro)
-                area = deteccao.area_relativa(largura_quadro, altura_quadro)
                 detalhes.append({"coordenadas_xywhn": deteccao.coordenadas_normalizadas(largura_quadro, altura_quadro),
-                                 "area_relativa": area, "confianca": deteccao.confianca,
-                                 "motivos_descarte": motivos})
-                cor = (128, 128, 128) if motivos else (0, 255, 0)
-                x1, y1, x2, y2 = map(int, (deteccao.x1, deteccao.y1, deteccao.x2, deteccao.y2))
-                cv2.rectangle(quadro, (x1, y1), (x2, y2), cor, 2)
-                cv2.circle(quadro, tuple(map(int, deteccao.centro)), 4, cor, -1)
-                cv2.putText(quadro, f"Pessoa {deteccao.confianca:.0%} Area {area:.1%}",
-                            (x1, max(20, y1 - 8)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, cor, 2)
+                                 "area_relativa": deteccao.area_relativa(largura_quadro, altura_quadro),
+                                 "confianca": deteccao.confianca, "motivos_descarte": motivos})
             agora = time.perf_counter()
             intervalos.append(agora - anterior)
             anterior = agora
             fps_efetivo = len(intervalos) / sum(intervalos) if sum(intervalos) > 0 else 0.0
-            cor_estado = ((0, 255, 0) if controlador.estado == EstadoPresenca.PRESENTE else
-                          (0, 255, 255) if controlador.estado == EstadoPresenca.AUSENCIA_TEMPORARIA else
-                          (0, 0, 255))
-            indicadores = [
-                ("BLOQUEIO REAL ATIVO" if args.lock_enabled else "MODO SIMULACAO", (255, 255, 255)),
-                (f"FPS: {fps_efetivo:.1f}  Deteccao: {detector.latencia_ms:.1f} ms", (255, 255, 255)),
-                (f"Pessoas: {len(deteccoes)}  Validas: {len(validas)}  Descartadas: {len(descartadas)}", (255, 255, 255)),
-                (f"Presenca bruta: {'SIM' if deteccoes else 'NAO'}  Valida: {'SIM' if validas else 'NAO'}", (255, 255, 255)),
-                (f"Estado: {controlador.estado.name}", cor_estado),
-                (f"Ausencia: {tempo_ausencia:.1f}s  Restante: {tempo_restante:.1f}s", cor_estado),
-                ("BLOQUEIO SIMULADO - R reinicia" if controlador.estado == EstadoPresenca.BLOQUEADO
-                 else f"Contagem regressiva: {tempo_restante:.1f}s", cor_estado),
-            ]
-            cv2.rectangle(quadro, (0, 0), (min(largura_quadro - 1, 500), 198), (0, 0, 0), -1)
-            for indice, (texto, cor) in enumerate(indicadores):
-                cv2.putText(quadro, texto, (10, 21 + indice * 23),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.52, cor, 1)
-            barra_largura = min(300, max(0, largura_quadro - 22))
-            progresso = min(1.0, tempo_ausencia / controlador.tempo_limite)
-            cv2.rectangle(quadro, (10, 174), (10 + barra_largura, 187), (220, 220, 220), 1)
-            if progresso > 0:
-                cv2.rectangle(quadro, (11, 175), (10 + int(barra_largura * progresso), 186), cor_estado, -1)
-            cv2.imshow("SentinelCV", quadro)
+            interface = renderizar(quadro, deteccoes, filtro, {
+                "app": config["app"]["name"], "versao": config["app"]["version"],
+                "modelo": Path(d["model"]).stem.upper(), "dispositivo": d["device"],
+                "fps": fps_efetivo, "latencia": detector.latencia_ms, "total": len(deteccoes),
+                "validas": len(validas), "descartadas": len(descartadas),
+                "confianca": d["confidence"], "area": filtro.min_area,
+                "limite": controlador.tempo_limite, "estado": controlador.estado.name,
+                "restante": tempo_restante, "modo": modo,
+            }, ajuda)
+            cv2.imshow("SentinelCV", interface)
             tecla = cv2.waitKey(1) & 0xFF
             fim_quadro = time.perf_counter()
             concluido = metricas.registrar(
@@ -191,7 +209,9 @@ def main() -> int:
                 instante_solicitacao_s=(controlador.instante_solicitacao - metricas.inicio
                                          if controlador.instante_solicitacao is not None else None),
             ) if metricas else False
-            if tecla in (ord("r"), ord("R")):
+            if tecla in (ord("h"), ord("H")):
+                ajuda = not ajuda
+            if tecla in (ord("r"), ord("R")) and not args.lock_enabled:
                 anterior_estado = controlador.estado
                 controlador.reinicializar()
                 bloqueador.reinicializar()
@@ -211,7 +231,7 @@ def main() -> int:
         controlador.registrar_erro(f"falha de {etapa}")
         registrar_evento(logger, f"falha_{etapa}", anterior_estado, controlador, modo, ausencia=ausencia)
         print(f"Erro de {etapa}: {erro}", file=sys.stderr)
-        if etapa in ("captura", "inferencia") and not acao_executada:
+        if config["security"]["fail_safe"] and etapa in ("captura", "inferencia") and not acao_executada:
             resultado = bloqueador.bloquear()
             registrar_evento(logger, "bloqueio_preventivo", controlador.estado, controlador, modo, resultado, ausencia)
             print(f"Bloqueio preventivo: {resultado.mensagem}", file=sys.stderr)
@@ -224,7 +244,7 @@ def main() -> int:
                 cv2.destroyAllWindows()
             finally:
                 if metricas is not None:
-                    csv_path, json_path = metricas.exportar(motivo=motivo)
+                    csv_path, json_path = metricas.exportar(diretorio=Path(config["benchmark"]["output_dir"]), motivo=motivo)
                     print("Resumo do benchmark:")
                     print(json.dumps(metricas.resumo(), ensure_ascii=False, indent=2))
                     print(f"Motivo: {motivo}\nAmostras: {csv_path}\nResumo: {json_path}")

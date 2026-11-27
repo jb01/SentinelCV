@@ -1,0 +1,96 @@
+{
+  "cenario": "final_pessoa_fundo",
+  "parametros": {
+    "modelo_yolo": "yolo26n.pt",
+    "resolucao_inferencia": 320,
+    "resolucao_captura": [
+      640.0,
+      480.0
+    ],
+    "confianca_minima": 0.5,
+    "dispositivo": "cpu",
+    "roi": [
+      0.15,
+      0.2,
+      0.85,
+      1.0
+    ],
+    "area_relativa_minima": 0.2,
+    "filtragem_geometrica_ativa": true,
+    "tempo_limite_ausencia_s": 10.0,
+    "configuracao_efetiva": {
+      "app": {
+        "name": "SentinelCV",
+        "version": "1.0.0"
+      },
+      "camera": {
+        "index": 0,
+        "width": 640,
+        "height": 480,
+        "fps": 30,
+        "codec": "MJPG"
+      },
+      "detector": {
+        "model": "yolo26n.pt",
+        "device": "cpu",
+        "imgsz": 320,
+        "confidence": 0.5,
+        "classes": [
+          0
+        ]
+      },
+      "roi": {
+        "enabled": true,
+        "xmin": 0.15,
+        "ymin": 0.2,
+        "xmax": 0.85,
+        "ymax": 1.0,
+        "min_area": 0.2
+      },
+      "presence": {
+        "absence_timeout": 10.0
+      },
+      "security": {
+        "lock_enabled": false,
+        "fail_safe": true
+      },
+      "benchmark": {
+        "duration": 30.0,
+        "warmup": 5,
+        "output_dir": "results"
+      },
+      "logging": {
+        "enabled": true,
+        "file": "logs/sentinelcv.log"
+      }
+    },
+    "versoes": {
+      "python": "3.14.4",
+      "opencv": "5.1.0",
+      "pytorch": "2.15.0+cpu",
+      "ultralytics": "8.4.218"
+    }
+  },
+  "duracao_solicitada_s": 30.0,
+  "aquecimento_s": 5,
+  "total_quadros": 895,
+  "duracao_efetiva_s": 30.014094361999014,
+  "fps_medio": 29.819323855167315,
+  "fps_instantaneo_minimo": 5.868982880310097,
+  "fps_instantaneo_maximo": 50.507624350239354,
+  "latencia_media_ms": 14.520813771861725,
+  "latencia_mediana_ms": 13.987445992825087,
+  "latencia_minima_ms": 11.053877002268564,
+  "latencia_maxima_ms": 116.39913700491888,
+  "latencia_percentil_95_ms": 18.199108496628465,
+  "latencia_desvio_padrao_ms": 4.009513822759718,
+  "confianca_media": 0.8791888509382749,
+  "quadros_com_presenca_bruta": 895,
+  "percentual_quadros_com_presenca_bruta": 100.0,
+  "quadros_com_presenca_valida": 184,
+  "percentual_quadros_com_presenca_valida": 20.558659217877096,
+  "quadros_com_presenca": 895,
+  "quadros_sem_presenca": 0,
+  "percentual_quadros_com_presenca": 100.0,
+  "motivo_encerramento": "duracao_concluida"
+}

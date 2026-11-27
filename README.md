@@ -82,3 +82,19 @@ Após o limite, a aplicação executa `loginctl lock-session`, consulta `LockedH
 Valide primeiro em modo simulado, incluindo o retorno antes do prazo. Para validar o modo real, execute-o de um terminal da própria sessão gráfica e afaste-se até o limite; confira se a tela realmente bloqueou e se a câmera foi liberada. A aceitação do comando ou `LockedHint` isoladamente não substitui essa verificação funcional.
 
 Referência técnica: [documentação oficial do loginctl](https://www.freedesktop.org/software/systemd/man/latest/loginctl.html).
+
+### Configuração e interface
+
+O arquivo `config.yaml` na raiz reúne os parâmetros da câmera, inferência, ROI,
+temporizador, segurança, benchmark e logs. Para usar outro arquivo, execute
+`.venv/bin/python main.py --config caminho/config.yaml`. As opções informadas na
+linha de comando prevalecem sobre o YAML. O bloqueio real exige explicitamente
+`--lock-enabled`, mesmo que o YAML contenha `security.lock_enabled: true`; ele
+não pode ser combinado com `--benchmark`. A política `security.fail_safe`
+controla a solicitação preventiva em falhas de captura ou inferência.
+
+O benchmark usa por padrão 5 segundos de aquecimento e 30 segundos de coleta;
+os novos resumos JSON incluem a configuração efetiva. Os arquivos existentes
+não são alterados. A janela apresenta vídeo e indicadores separados. Use **Q**
+para sair, **H** para alternar a ajuda e **R** para reiniciar o controlador no
+modo simulado, inclusive durante benchmark. Não há desbloqueio automático.

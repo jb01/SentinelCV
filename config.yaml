@@ -1,0 +1,41 @@
+app:
+  name: SentinelCV
+  version: "1.0.0"
+
+camera:
+  index: 0
+  width: 640
+  height: 480
+  fps: 30
+  codec: MJPG
+
+detector:
+  model: yolo26n.pt
+  device: cpu
+  imgsz: 320
+  confidence: 0.50
+  classes: [0]
+
+roi:
+  enabled: true
+  xmin: 0.15
+  ymin: 0.20
+  xmax: 0.85
+  ymax: 1.00
+  min_area: 0.20
+
+presence:
+  absence_timeout: 10.0
+
+security:
+  lock_enabled: false
+  fail_safe: true
+
+benchmark:
+  duration: 30
+  warmup: 5
+  output_dir: results
+
+logging:
+  enabled: true
+  file: logs/sentinelcv.log

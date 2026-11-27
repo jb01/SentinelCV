@@ -98,3 +98,28 @@ os novos resumos JSON incluem a configuração efetiva. Os arquivos existentes
 não são alterados. A janela apresenta vídeo e indicadores separados. Use **Q**
 para sair, **H** para alternar a ajuda e **R** para reiniciar o controlador no
 modo simulado, inclusive durante benchmark. Não há desbloqueio automático.
+
+### Execução contínua e medição de recursos
+
+`--headless` remove a janela e a renderização; encerre com Ctrl+C. A câmera
+continua ativa e seus indicadores físicos continuam sob controle do equipamento.
+`--inference-fps` limita o início das inferências usando relógio monotônico;
+uma thread de captura descarta quadros antigos. `--cpu-threads` ajusta as
+threads do PyTorch. Os padrões, configuráveis em `runtime`, mantêm a execução
+anterior (sem limite, janela ativa e threads padrão do PyTorch).
+
+`--resource-benchmark` mede o processo com psutil e grava novos arquivos CSV e
+JSON em `results/`. A coleta padrão é de uma amostra por segundo, incluindo a
+inicialização; sem `--benchmark`, encerra após `--duration` segundos depois da
+abertura da câmera. CPU do processo pode ultrapassar 100%; a CPU normalizada é
+esse valor dividido pelo número de CPUs lógicas, não a utilização global da
+máquina. FPS e latência no resumo são médias das amostras periódicas. A variação
+de RSS é a diferença entre a última e a primeira amostra. O monitoramento também
+consome recursos e suas medições não são resultados científicos por si só.
+
+O relógio de ausência é monotônico e não conta quadros. Contudo, mudanças de
+presença só são observadas nas inferências: a detecção do retorno ou a solicitação
+de bloqueio podem atrasar até a próxima inferência, acrescida da latência de
+captura e processamento. Uma frequência menor reduz a resolução temporal e
+pode deixar eventos breves sem detecção. Tanto `--benchmark` quanto
+`--resource-benchmark` são incompatíveis com `--lock-enabled`.

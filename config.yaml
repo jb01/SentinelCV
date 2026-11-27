@@ -39,3 +39,9 @@ benchmark:
 logging:
   enabled: true
   file: logs/sentinelcv.log
+
+runtime:
+  inference_fps: null
+  cpu_threads: null
+  headless: false
+  resource_interval: 1.0

@@ -1,0 +1,102 @@
+{
+  "cenario": "recursos_original",
+  "parametros": {
+    "modelo_yolo": "yolo26n.pt",
+    "resolucao_inferencia": 320,
+    "resolucao_captura": [
+      640.0,
+      480.0
+    ],
+    "confianca_minima": 0.5,
+    "dispositivo": "cpu",
+    "roi": [
+      0.15,
+      0.2,
+      0.85,
+      1.0
+    ],
+    "area_relativa_minima": 0.2,
+    "filtragem_geometrica_ativa": true,
+    "tempo_limite_ausencia_s": 10.0,
+    "configuracao_efetiva": {
+      "app": {
+        "name": "SentinelCV",
+        "version": "1.0.0"
+      },
+      "camera": {
+        "index": 0,
+        "width": 640,
+        "height": 480,
+        "fps": 30,
+        "codec": "MJPG"
+      },
+      "detector": {
+        "model": "yolo26n.pt",
+        "device": "cpu",
+        "imgsz": 320,
+        "confidence": 0.5,
+        "classes": [
+          0
+        ]
+      },
+      "roi": {
+        "enabled": true,
+        "xmin": 0.15,
+        "ymin": 0.2,
+        "xmax": 0.85,
+        "ymax": 1.0,
+        "min_area": 0.2
+      },
+      "presence": {
+        "absence_timeout": 10.0
+      },
+      "security": {
+        "lock_enabled": false,
+        "fail_safe": true
+      },
+      "benchmark": {
+        "duration": 60.0,
+        "warmup": 5,
+        "output_dir": "results"
+      },
+      "logging": {
+        "enabled": true,
+        "file": "logs/sentinelcv.log"
+      },
+      "runtime": {
+        "inference_fps": null,
+        "cpu_threads": null,
+        "headless": false,
+        "resource_interval": 1.0
+      }
+    },
+    "versoes": {
+      "python": "3.14.4",
+      "opencv": "5.1.0",
+      "pytorch": "2.15.0+cpu",
+      "ultralytics": "8.4.218"
+    }
+  },
+  "duracao_solicitada_s": 60.0,
+  "aquecimento_s": 5,
+  "total_quadros": 1794,
+  "duracao_efetiva_s": 60.02722211500077,
+  "fps_medio": 29.886440464678447,
+  "fps_instantaneo_minimo": 9.418723923553886,
+  "fps_instantaneo_maximo": 47.349152930037036,
+  "latencia_media_ms": 14.48877142204277,
+  "latencia_mediana_ms": 14.332640999782598,
+  "latencia_minima_ms": 11.606537002080586,
+  "latencia_maxima_ms": 82.87852200010093,
+  "latencia_percentil_95_ms": 16.538363147628843,
+  "latencia_desvio_padrao_ms": 2.739390786991286,
+  "confianca_media": 0.8894638391575022,
+  "quadros_com_presenca_bruta": 1794,
+  "percentual_quadros_com_presenca_bruta": 100.0,
+  "quadros_com_presenca_valida": 1794,
+  "percentual_quadros_com_presenca_valida": 100.0,
+  "quadros_com_presenca": 1794,
+  "quadros_sem_presenca": 0,
+  "percentual_quadros_com_presenca": 100.0,
+  "motivo_encerramento": "duracao_concluida"
+}

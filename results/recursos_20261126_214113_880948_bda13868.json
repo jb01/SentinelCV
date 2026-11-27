@@ -1,0 +1,718 @@
+{
+  "configuracao_efetiva": {
+    "app": {
+      "name": "SentinelCV",
+      "version": "1.0.0"
+    },
+    "camera": {
+      "index": 0,
+      "width": 640,
+      "height": 480,
+      "fps": 30,
+      "codec": "MJPG"
+    },
+    "detector": {
+      "model": "yolo26n.pt",
+      "device": "cpu",
+      "imgsz": 320,
+      "confidence": 0.5,
+      "classes": [
+        0
+      ]
+    },
+    "roi": {
+      "enabled": true,
+      "xmin": 0.15,
+      "ymin": 0.2,
+      "xmax": 0.85,
+      "ymax": 1.0,
+      "min_area": 0.2
+    },
+    "presence": {
+      "absence_timeout": 10.0
+    },
+    "security": {
+      "lock_enabled": false,
+      "fail_safe": true
+    },
+    "benchmark": {
+      "duration": 60.0,
+      "warmup": 5,
+      "output_dir": "results"
+    },
+    "logging": {
+      "enabled": true,
+      "file": "logs/sentinelcv.log"
+    },
+    "runtime": {
+      "inference_fps": 2.0,
+      "cpu_threads": null,
+      "headless": true,
+      "resource_interval": 1.0
+    }
+  },
+  "motivo_encerramento": "duracao_concluida",
+  "cpus_logicas": 16,
+  "total_amostras": 65,
+  "cpu_processo_media_pct": 51.47076923076923,
+  "cpu_processo_maxima_pct": 98.1,
+  "cpu_processo_p95_pct": 55.98,
+  "cpu_normalizada_media_pct": 3.2169230769230768,
+  "ram_media_mib": 430.42578125,
+  "ram_maxima_mib": 432.19921875,
+  "variacao_ram_mib": 65.296875,
+  "fps_medio": 1.9882318621363226,
+  "latencia_media_ms": 21.56177973472495,
+  "amostras": [
+    {
+      "tempo_decorrido_s": 1.0090500329970382,
+      "cpu_processo_pct": 98.1,
+      "cpu_normalizada_pct": 6.13125,
+      "rss_mib": 366.90234375,
+      "ram_pct": 2.504140374974539,
+      "threads": 47,
+      "fps_efetivo": null,
+      "latencia_inferencia_ms": null
+    },
+    {
+      "tempo_decorrido_s": 2.011492254001496,
+      "cpu_processo_pct": 88.8,
+      "cpu_normalizada_pct": 5.55,
+      "rss_mib": 431.29296875,
+      "ram_pct": 2.9436119852791407,
+      "threads": 47,
+      "fps_efetivo": 1.8280727721009031,
+      "latencia_inferencia_ms": 15.597094003169332
+    },
+    {
+      "tempo_decorrido_s": 3.0127996129958774,
+      "cpu_processo_pct": 40.9,
+      "cpu_normalizada_pct": 2.55625,
+      "rss_mib": 431.296875,
+      "ram_pct": 2.9436386457747914,
+      "threads": 47,
+      "fps_efetivo": 1.888520923384164,
+      "latencia_inferencia_ms": 21.678716999304015
+    },
+    {
+      "tempo_decorrido_s": 4.0140898620011285,
+      "cpu_processo_pct": 47.9,
+      "cpu_normalizada_pct": 2.99375,
+      "rss_mib": 431.3046875,
+      "ram_pct": 2.9436919667660923,
+      "threads": 47,
+      "fps_efetivo": 1.9199551587989778,
+      "latencia_inferencia_ms": 18.653933999303263
+    },
+    {
+      "tempo_decorrido_s": 5.015429209001013,
+      "cpu_processo_pct": 48.9,
+      "cpu_normalizada_pct": 3.05625,
+      "rss_mib": 431.30859375,
+      "ram_pct": 2.9437186272617435,
+      "threads": 47,
+      "fps_efetivo": 1.9363708558281034,
+      "latencia_inferencia_ms": 19.487216995912604
+    },
+    {
+      "tempo_decorrido_s": 6.016740409999329,
+      "cpu_processo_pct": 50.9,
+      "cpu_normalizada_pct": 3.18125,
+      "rss_mib": 431.30859375,
+      "ram_pct": 2.9437186272617435,
+      "threads": 47,
+      "fps_efetivo": 1.9463255607254488,
+      "latencia_inferencia_ms": 22.29611899383599
+    },
+    {
+      "tempo_decorrido_s": 7.018256875999214,
+      "cpu_processo_pct": 53.9,
+      "cpu_normalizada_pct": 3.36875,
+      "rss_mib": 431.3125,
+      "ram_pct": 2.9437452877573937,
+      "threads": 47,
+      "fps_efetivo": 1.9534952821535705,
+      "latencia_inferencia_ms": 24.076807996607386
+    },
+    {
+      "tempo_decorrido_s": 8.019110472996545,
+      "cpu_processo_pct": 54.0,
+      "cpu_normalizada_pct": 3.375,
+      "rss_mib": 431.31640625,
+      "ram_pct": 2.9437719482530444,
+      "threads": 47,
+      "fps_efetivo": 1.959674560524397,
+      "latencia_inferencia_ms": 23.383977000776213
+    },
+    {
+      "tempo_decorrido_s": 9.020010585001728,
+      "cpu_processo_pct": 52.0,
+      "cpu_normalizada_pct": 3.25,
+      "rss_mib": 431.328125,
+      "ram_pct": 2.943851929739996,
+      "threads": 47,
+      "fps_efetivo": 1.9640736761298048,
+      "latencia_inferencia_ms": 24.062561002210714
+    },
+    {
+      "tempo_decorrido_s": 10.020792732997506,
+      "cpu_processo_pct": 47.0,
+      "cpu_normalizada_pct": 2.9375,
+      "rss_mib": 431.3359375,
+      "ram_pct": 2.9439052507312975,
+      "threads": 47,
+      "fps_efetivo": 1.9683998381861956,
+      "latencia_inferencia_ms": 19.782928000495303
+    },
+    {
+      "tempo_decorrido_s": 11.022155548002047,
+      "cpu_processo_pct": 47.9,
+      "cpu_normalizada_pct": 2.99375,
+      "rss_mib": 431.3359375,
+      "ram_pct": 2.9439052507312975,
+      "threads": 47,
+      "fps_efetivo": 1.9710891669691035,
+      "latencia_inferencia_ms": 19.84564600570593
+    },
+    {
+      "tempo_decorrido_s": 12.022885384998517,
+      "cpu_processo_pct": 49.0,
+      "cpu_normalizada_pct": 3.0625,
+      "rss_mib": 431.3359375,
+      "ram_pct": 2.9439052507312975,
+      "threads": 47,
+      "fps_efetivo": 1.9729377175425176,
+      "latencia_inferencia_ms": 22.870500004501082
+    },
+    {
+      "tempo_decorrido_s": 13.023603208996064,
+      "cpu_processo_pct": 53.0,
+      "cpu_normalizada_pct": 3.3125,
+      "rss_mib": 431.3359375,
+      "ram_pct": 2.9439052507312975,
+      "threads": 47,
+      "fps_efetivo": 1.9750908261888445,
+      "latencia_inferencia_ms": 22.53623499564128
+    },
+    {
+      "tempo_decorrido_s": 14.024165075999917,
+      "cpu_processo_pct": 56.0,
+      "cpu_normalizada_pct": 3.5,
+      "rss_mib": 431.33984375,
+      "ram_pct": 2.943931911226948,
+      "threads": 47,
+      "fps_efetivo": 1.9766545010681549,
+      "latencia_inferencia_ms": 24.09014800650766
+    },
+    {
+      "tempo_decorrido_s": 15.024860621000698,
+      "cpu_processo_pct": 53.0,
+      "cpu_normalizada_pct": 3.3125,
+      "rss_mib": 431.3515625,
+      "ram_pct": 2.9440118927139,
+      "threads": 47,
+      "fps_efetivo": 1.9783394225300643,
+      "latencia_inferencia_ms": 23.103771003661677
+    },
+    {
+      "tempo_decorrido_s": 16.026166165000177,
+      "cpu_processo_pct": 49.9,
+      "cpu_normalizada_pct": 3.11875,
+      "rss_mib": 431.3515625,
+      "ram_pct": 2.9440118927139,
+      "threads": 47,
+      "fps_efetivo": 2.0641624181374514,
+      "latencia_inferencia_ms": 23.044265995849855
+    },
+    {
+      "tempo_decorrido_s": 17.027203236000787,
+      "cpu_processo_pct": 49.9,
+      "cpu_normalizada_pct": 3.11875,
+      "rss_mib": 431.3515625,
+      "ram_pct": 2.9440118927139,
+      "threads": 47,
+      "fps_efetivo": 1.9978784290547904,
+      "latencia_inferencia_ms": 20.709939999505877
+    },
+    {
+      "tempo_decorrido_s": 18.02848768799595,
+      "cpu_processo_pct": 49.9,
+      "cpu_normalizada_pct": 3.11875,
+      "rss_mib": 431.3515625,
+      "ram_pct": 2.9440118927139,
+      "threads": 47,
+      "fps_efetivo": 1.9983506928293135,
+      "latencia_inferencia_ms": 23.374128999421373
+    },
+    {
+      "tempo_decorrido_s": 19.029319075001695,
+      "cpu_processo_pct": 47.0,
+      "cpu_normalizada_pct": 2.9375,
+      "rss_mib": 431.3515625,
+      "ram_pct": 2.9440118927139,
+      "threads": 47,
+      "fps_efetivo": 1.9986524042195777,
+      "latencia_inferencia_ms": 19.149043000652455
+    },
+    {
+      "tempo_decorrido_s": 20.030205287999706,
+      "cpu_processo_pct": 49.0,
+      "cpu_normalizada_pct": 3.0625,
+      "rss_mib": 431.35546875,
+      "ram_pct": 2.9440385532095505,
+      "threads": 47,
+      "fps_efetivo": 1.9985923857870105,
+      "latencia_inferencia_ms": 20.730333002575208
+    },
+    {
+      "tempo_decorrido_s": 21.031105260000913,
+      "cpu_processo_pct": 50.0,
+      "cpu_normalizada_pct": 3.125,
+      "rss_mib": 431.35546875,
+      "ram_pct": 2.9440385532095505,
+      "threads": 47,
+      "fps_efetivo": 1.998809172390945,
+      "latencia_inferencia_ms": 21.624100001645274
+    },
+    {
+      "tempo_decorrido_s": 22.03181141999812,
+      "cpu_processo_pct": 49.0,
+      "cpu_normalizada_pct": 3.0625,
+      "rss_mib": 431.36328125,
+      "ram_pct": 2.9440918742008515,
+      "threads": 47,
+      "fps_efetivo": 1.9991292303515629,
+      "latencia_inferencia_ms": 21.84452200162923
+    },
+    {
+      "tempo_decorrido_s": 23.03251066699886,
+      "cpu_processo_pct": 50.0,
+      "cpu_normalizada_pct": 3.125,
+      "rss_mib": 431.36328125,
+      "ram_pct": 2.9440918742008515,
+      "threads": 47,
+      "fps_efetivo": 1.9991413350775384,
+      "latencia_inferencia_ms": 20.203795997076668
+    },
+    {
+      "tempo_decorrido_s": 24.033282828000665,
+      "cpu_processo_pct": 47.0,
+      "cpu_normalizada_pct": 2.9375,
+      "rss_mib": 431.36328125,
+      "ram_pct": 2.9440918742008515,
+      "threads": 47,
+      "fps_efetivo": 1.9992252443727585,
+      "latencia_inferencia_ms": 20.40668699919479
+    },
+    {
+      "tempo_decorrido_s": 25.034049889996822,
+      "cpu_processo_pct": 49.0,
+      "cpu_normalizada_pct": 3.0625,
+      "rss_mib": 431.3671875,
+      "ram_pct": 2.944118534696502,
+      "threads": 47,
+      "fps_efetivo": 1.9988428060695937,
+      "latencia_inferencia_ms": 19.99503799743252
+    },
+    {
+      "tempo_decorrido_s": 26.035394965001615,
+      "cpu_processo_pct": 51.9,
+      "cpu_normalizada_pct": 3.24375,
+      "rss_mib": 431.3671875,
+      "ram_pct": 2.944118534696502,
+      "threads": 47,
+      "fps_efetivo": 1.998624514897496,
+      "latencia_inferencia_ms": 21.896135003771633
+    },
+    {
+      "tempo_decorrido_s": 27.036614044001908,
+      "cpu_processo_pct": 53.9,
+      "cpu_normalizada_pct": 3.36875,
+      "rss_mib": 431.3671875,
+      "ram_pct": 2.944118534696502,
+      "threads": 47,
+      "fps_efetivo": 1.9989454904220487,
+      "latencia_inferencia_ms": 22.54608299699612
+    },
+    {
+      "tempo_decorrido_s": 28.037309938001272,
+      "cpu_processo_pct": 49.0,
+      "cpu_normalizada_pct": 3.0625,
+      "rss_mib": 431.3671875,
+      "ram_pct": 2.944145195192153,
+      "threads": 47,
+      "fps_efetivo": 1.999138069355033,
+      "latencia_inferencia_ms": 20.254709997971077
+    },
+    {
+      "tempo_decorrido_s": 29.03828261599847,
+      "cpu_processo_pct": 48.0,
+      "cpu_normalizada_pct": 3.0,
+      "rss_mib": 431.37109375,
+      "ram_pct": 2.944145195192153,
+      "threads": 47,
+      "fps_efetivo": 1.9992577382452512,
+      "latencia_inferencia_ms": 20.32085099926917
+    },
+    {
+      "tempo_decorrido_s": 30.039114979997976,
+      "cpu_processo_pct": 49.0,
+      "cpu_normalizada_pct": 3.0625,
+      "rss_mib": 431.37890625,
+      "ram_pct": 2.944198516183454,
+      "threads": 47,
+      "fps_efetivo": 1.9991038304068902,
+      "latencia_inferencia_ms": 20.447264003450982
+    },
+    {
+      "tempo_decorrido_s": 31.039960545000213,
+      "cpu_processo_pct": 48.0,
+      "cpu_normalizada_pct": 3.0,
+      "rss_mib": 431.3828125,
+      "ram_pct": 2.9442251766791045,
+      "threads": 47,
+      "fps_efetivo": 1.998999092491656,
+      "latencia_inferencia_ms": 20.152391996816732
+    },
+    {
+      "tempo_decorrido_s": 32.04073515100026,
+      "cpu_processo_pct": 48.0,
+      "cpu_normalizada_pct": 3.0,
+      "rss_mib": 431.390625,
+      "ram_pct": 2.944278497670406,
+      "threads": 47,
+      "fps_efetivo": 1.9987699594988548,
+      "latencia_inferencia_ms": 18.892305000917986
+    },
+    {
+      "tempo_decorrido_s": 33.04168701599701,
+      "cpu_processo_pct": 48.0,
+      "cpu_normalizada_pct": 3.0,
+      "rss_mib": 431.390625,
+      "ram_pct": 2.944278497670406,
+      "threads": 47,
+      "fps_efetivo": 1.9987567710235108,
+      "latencia_inferencia_ms": 20.974012004444376
+    },
+    {
+      "tempo_decorrido_s": 34.042563381000946,
+      "cpu_processo_pct": 53.0,
+      "cpu_normalizada_pct": 3.3125,
+      "rss_mib": 431.390625,
+      "ram_pct": 2.944278497670406,
+      "threads": 47,
+      "fps_efetivo": 1.9979284053105555,
+      "latencia_inferencia_ms": 22.672706996672787
+    },
+    {
+      "tempo_decorrido_s": 35.0438323970011,
+      "cpu_processo_pct": 51.9,
+      "cpu_normalizada_pct": 3.24375,
+      "rss_mib": 431.39453125,
+      "ram_pct": 2.9443051581660566,
+      "threads": 47,
+      "fps_efetivo": 1.9980126217332173,
+      "latencia_inferencia_ms": 23.89696599857416
+    },
+    {
+      "tempo_decorrido_s": 36.04456174599909,
+      "cpu_processo_pct": 49.0,
+      "cpu_normalizada_pct": 3.0625,
+      "rss_mib": 431.39453125,
+      "ram_pct": 2.9443051581660566,
+      "threads": 47,
+      "fps_efetivo": 1.9985154940309136,
+      "latencia_inferencia_ms": 21.90605299983872
+    },
+    {
+      "tempo_decorrido_s": 37.04529486499814,
+      "cpu_processo_pct": 47.0,
+      "cpu_normalizada_pct": 2.9375,
+      "rss_mib": 431.39453125,
+      "ram_pct": 2.9443051581660566,
+      "threads": 47,
+      "fps_efetivo": 1.9987018241109213,
+      "latencia_inferencia_ms": 20.306463004089892
+    },
+    {
+      "tempo_decorrido_s": 38.04625182799646,
+      "cpu_processo_pct": 52.0,
+      "cpu_normalizada_pct": 3.25,
+      "rss_mib": 431.3984375,
+      "ram_pct": 2.9443318186617073,
+      "threads": 47,
+      "fps_efetivo": 1.9981111776442007,
+      "latencia_inferencia_ms": 23.86183499766048
+    },
+    {
+      "tempo_decorrido_s": 39.047163253999315,
+      "cpu_processo_pct": 51.0,
+      "cpu_normalizada_pct": 3.1875,
+      "rss_mib": 431.3984375,
+      "ram_pct": 2.9443318186617073,
+      "threads": 47,
+      "fps_efetivo": 1.9979685425749178,
+      "latencia_inferencia_ms": 25.09615100279916
+    },
+    {
+      "tempo_decorrido_s": 40.04800644399802,
+      "cpu_processo_pct": 47.0,
+      "cpu_normalizada_pct": 2.9375,
+      "rss_mib": 431.40234375,
+      "ram_pct": 2.9443584791573576,
+      "threads": 47,
+      "fps_efetivo": 1.9986843305956679,
+      "latencia_inferencia_ms": 19.23166600317927
+    },
+    {
+      "tempo_decorrido_s": 41.04870191899681,
+      "cpu_processo_pct": 51.0,
+      "cpu_normalizada_pct": 3.1875,
+      "rss_mib": 431.40234375,
+      "ram_pct": 2.9443584791573576,
+      "threads": 47,
+      "fps_efetivo": 1.9986060462312565,
+      "latencia_inferencia_ms": 22.62416700250469
+    },
+    {
+      "tempo_decorrido_s": 42.04998162099946,
+      "cpu_processo_pct": 48.9,
+      "cpu_normalizada_pct": 3.05625,
+      "rss_mib": 431.40234375,
+      "ram_pct": 2.9443584791573576,
+      "threads": 47,
+      "fps_efetivo": 1.9988577815039332,
+      "latencia_inferencia_ms": 21.720970995374955
+    },
+    {
+      "tempo_decorrido_s": 43.050736042998324,
+      "cpu_processo_pct": 49.0,
+      "cpu_normalizada_pct": 3.0625,
+      "rss_mib": 431.40625,
+      "ram_pct": 2.9443851396530083,
+      "threads": 47,
+      "fps_efetivo": 1.998855223631888,
+      "latencia_inferencia_ms": 19.93022499664221
+    },
+    {
+      "tempo_decorrido_s": 44.05214858399995,
+      "cpu_processo_pct": 51.9,
+      "cpu_normalizada_pct": 3.24375,
+      "rss_mib": 431.41015625,
+      "ram_pct": 2.944411800148659,
+      "threads": 47,
+      "fps_efetivo": 1.9985178836825868,
+      "latencia_inferencia_ms": 23.153848000220023
+    },
+    {
+      "tempo_decorrido_s": 45.053102614001546,
+      "cpu_processo_pct": 50.0,
+      "cpu_normalizada_pct": 3.125,
+      "rss_mib": 431.4140625,
+      "ram_pct": 2.9444384606443093,
+      "threads": 47,
+      "fps_efetivo": 1.9987459544083168,
+      "latencia_inferencia_ms": 21.53624000493437
+    },
+    {
+      "tempo_decorrido_s": 46.05401990700193,
+      "cpu_processo_pct": 46.0,
+      "cpu_normalizada_pct": 2.875,
+      "rss_mib": 431.4140625,
+      "ram_pct": 2.9444384606443093,
+      "threads": 47,
+      "fps_efetivo": 1.998996822501952,
+      "latencia_inferencia_ms": 20.339219001471065
+    },
+    {
+      "tempo_decorrido_s": 47.05543258800026,
+      "cpu_processo_pct": 48.9,
+      "cpu_normalizada_pct": 3.05625,
+      "rss_mib": 431.4140625,
+      "ram_pct": 2.9444384606443093,
+      "threads": 47,
+      "fps_efetivo": 1.9989113695472498,
+      "latencia_inferencia_ms": 20.356399996671826
+    },
+    {
+      "tempo_decorrido_s": 48.05621718100156,
+      "cpu_processo_pct": 53.0,
+      "cpu_normalizada_pct": 3.3125,
+      "rss_mib": 431.4140625,
+      "ram_pct": 2.9444384606443093,
+      "threads": 47,
+      "fps_efetivo": 1.9989363834074116,
+      "latencia_inferencia_ms": 22.88111600500997
+    },
+    {
+      "tempo_decorrido_s": 49.05685070600157,
+      "cpu_processo_pct": 49.0,
+      "cpu_normalizada_pct": 3.0625,
+      "rss_mib": 431.41796875,
+      "ram_pct": 2.94446512113996,
+      "threads": 47,
+      "fps_efetivo": 1.9994027818543216,
+      "latencia_inferencia_ms": 21.31770399864763
+    },
+    {
+      "tempo_decorrido_s": 50.057660163001856,
+      "cpu_processo_pct": 50.0,
+      "cpu_normalizada_pct": 3.125,
+      "rss_mib": 431.42578125,
+      "ram_pct": 2.9445184421312613,
+      "threads": 47,
+      "fps_efetivo": 1.9998438488594799,
+      "latencia_inferencia_ms": 19.45732500462327
+    },
+    {
+      "tempo_decorrido_s": 51.058461797001655,
+      "cpu_processo_pct": 47.0,
+      "cpu_normalizada_pct": 2.9375,
+      "rss_mib": 431.42578125,
+      "ram_pct": 2.9445184421312613,
+      "threads": 47,
+      "fps_efetivo": 1.9994815009885187,
+      "latencia_inferencia_ms": 20.306742000684608
+    },
+    {
+      "tempo_decorrido_s": 52.05959175899625,
+      "cpu_processo_pct": 45.9,
+      "cpu_normalizada_pct": 2.86875,
+      "rss_mib": 431.42578125,
+      "ram_pct": 2.9445184421312613,
+      "threads": 47,
+      "fps_efetivo": 1.9995657367126094,
+      "latencia_inferencia_ms": 18.565723999927286
+    },
+    {
+      "tempo_decorrido_s": 53.06047915900126,
+      "cpu_processo_pct": 54.0,
+      "cpu_normalizada_pct": 3.375,
+      "rss_mib": 431.42578125,
+      "ram_pct": 2.9445184421312613,
+      "threads": 47,
+      "fps_efetivo": 1.9990255503410854,
+      "latencia_inferencia_ms": 25.42699199693743
+    },
+    {
+      "tempo_decorrido_s": 54.0621212709957,
+      "cpu_processo_pct": 54.9,
+      "cpu_normalizada_pct": 3.43125,
+      "rss_mib": 431.42578125,
+      "ram_pct": 2.9445184421312613,
+      "threads": 47,
+      "fps_efetivo": 1.9993091701720356,
+      "latencia_inferencia_ms": 24.471834003634285
+    },
+    {
+      "tempo_decorrido_s": 55.06297430899576,
+      "cpu_processo_pct": 54.9,
+      "cpu_normalizada_pct": 3.43125,
+      "rss_mib": 431.43359375,
+      "ram_pct": 2.9445717631225627,
+      "threads": 47,
+      "fps_efetivo": 1.9984484545815855,
+      "latencia_inferencia_ms": 25.07806199719198
+    },
+    {
+      "tempo_decorrido_s": 56.06377838800108,
+      "cpu_processo_pct": 55.0,
+      "cpu_normalizada_pct": 3.4375,
+      "rss_mib": 431.43359375,
+      "ram_pct": 2.9445717631225627,
+      "threads": 47,
+      "fps_efetivo": 1.998910290590008,
+      "latencia_inferencia_ms": 24.704268005734775
+    },
+    {
+      "tempo_decorrido_s": 57.06453692999639,
+      "cpu_processo_pct": 56.0,
+      "cpu_normalizada_pct": 3.5,
+      "rss_mib": 431.4375,
+      "ram_pct": 2.944598423618213,
+      "threads": 47,
+      "fps_efetivo": 1.9988295050301623,
+      "latencia_inferencia_ms": 24.419313005637378
+    },
+    {
+      "tempo_decorrido_s": 58.065434666998044,
+      "cpu_processo_pct": 51.0,
+      "cpu_normalizada_pct": 3.1875,
+      "rss_mib": 431.4375,
+      "ram_pct": 2.944598423618213,
+      "threads": 47,
+      "fps_efetivo": 1.9992476792336764,
+      "latencia_inferencia_ms": 19.36010500503471
+    },
+    {
+      "tempo_decorrido_s": 59.06646447499952,
+      "cpu_processo_pct": 50.9,
+      "cpu_normalizada_pct": 3.18125,
+      "rss_mib": 431.4375,
+      "ram_pct": 2.944598423618213,
+      "threads": 47,
+      "fps_efetivo": 1.9995088836940762,
+      "latencia_inferencia_ms": 20.170062001852784
+    },
+    {
+      "tempo_decorrido_s": 60.06756105199747,
+      "cpu_processo_pct": 46.9,
+      "cpu_normalizada_pct": 2.93125,
+      "rss_mib": 431.44140625,
+      "ram_pct": 2.9446250841138637,
+      "threads": 47,
+      "fps_efetivo": 1.9992195218918511,
+      "latencia_inferencia_ms": 20.383987997774966
+    },
+    {
+      "tempo_decorrido_s": 61.068788862001384,
+      "cpu_processo_pct": 46.9,
+      "cpu_normalizada_pct": 2.93125,
+      "rss_mib": 431.44140625,
+      "ram_pct": 2.9446250841138637,
+      "threads": 47,
+      "fps_efetivo": 1.99914838784293,
+      "latencia_inferencia_ms": 19.767842997680418
+    },
+    {
+      "tempo_decorrido_s": 62.07019260300149,
+      "cpu_processo_pct": 55.9,
+      "cpu_normalizada_pct": 3.49375,
+      "rss_mib": 431.4453125,
+      "ram_pct": 2.9446517446095144,
+      "threads": 47,
+      "fps_efetivo": 1.9986562823285317,
+      "latencia_inferencia_ms": 23.493838001741096
+    },
+    {
+      "tempo_decorrido_s": 63.07084072499856,
+      "cpu_processo_pct": 51.0,
+      "cpu_normalizada_pct": 3.1875,
+      "rss_mib": 432.1875,
+      "ram_pct": 2.94971723878313,
+      "threads": 47,
+      "fps_efetivo": 1.9991368970342673,
+      "latencia_inferencia_ms": 21.71685099892784
+    },
+    {
+      "tempo_decorrido_s": 64.07201468700077,
+      "cpu_processo_pct": 49.9,
+      "cpu_normalizada_pct": 3.11875,
+      "rss_mib": 432.1875,
+      "ram_pct": 2.94971723878313,
+      "threads": 47,
+      "fps_efetivo": 1.998644992378613,
+      "latencia_inferencia_ms": 23.399760997563135
+    },
+    {
+      "tempo_decorrido_s": 65.07285145200149,
+      "cpu_processo_pct": 49.0,
+      "cpu_normalizada_pct": 3.0625,
+      "rss_mib": 432.19921875,
+      "ram_pct": 2.9497972202700815,
+      "threads": 47,
+      "fps_efetivo": 1.9987299855143756,
+      "latencia_inferencia_ms": 20.368202996905893
+    }
+  ]
+}

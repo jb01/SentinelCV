@@ -15,6 +15,8 @@ import ultralytics
 
 from src.config import carregar_config, validar_config
 from src.interface import renderizar
+from src.runtime import CapturaRecente, Limitador
+from src.resources import Recursos
 from src.camera import Camera
 from src.detector import Detector
 from src.metrics import MetricsCollector
@@ -58,6 +60,10 @@ def interpretar_argumentos(argv=None):
     """Combina configuração validada e opções explícitas da CLI."""
     parser = argparse.ArgumentParser(description="SentinelCV: detecção de pessoas")
     parser.add_argument("--config", default=Path(__file__).resolve().parent / "config.yaml", help="arquivo YAML de configuração")
+    parser.add_argument("--headless", action="store_true", default=None, help="executa sem janela")
+    parser.add_argument("--inference-fps", type=float, help="limite de inferências por segundo")
+    parser.add_argument("--cpu-threads", type=int, help="threads do PyTorch")
+    parser.add_argument("--resource-benchmark", action="store_true", help="coleta recursos do processo")
     parser.add_argument("--benchmark", action="store_true", help="coleta métricas experimentais")
     parser.add_argument("--duration", type=float, default=None, help="duração útil da coleta em segundos")
     parser.add_argument("--scenario", default="cenario", help="identificador do cenário experimental")
@@ -70,6 +76,10 @@ def interpretar_argumentos(argv=None):
     args = parser.parse_args(argv)
     try:
         config = carregar_config(args.config)
+        for chave in ("headless", "inference_fps", "cpu_threads"):
+            valor = getattr(args, chave)
+            if valor is not None:
+                config["runtime"][chave] = valor
         if args.duration is not None:
             config["benchmark"]["duration"] = args.duration
         if args.min_area is not None:
@@ -90,8 +100,8 @@ def interpretar_argumentos(argv=None):
     args.roi = [config["roi"][k] for k in ("xmin", "ymin", "xmax", "ymax")]
     args.no_roi = not config["roi"]["enabled"]
     args.absence_time = config["presence"]["absence_timeout"]
-    if args.benchmark and args.lock_enabled:
-        parser.error("--benchmark é incompatível com --lock-enabled")
+    if (args.benchmark or args.resource_benchmark) and args.lock_enabled:
+        parser.error("benchmarks são incompatíveis com --lock-enabled")
     try:
         filtro = FiltroPresenca(ROI(*args.roi), args.min_area, not args.no_roi)
         controlador = ControladorPresenca(args.absence_time, relogio=time.perf_counter)
@@ -110,14 +120,21 @@ def main() -> int:
     c = config["camera"]
     camera = Camera(c["index"], c["width"], c["height"], c["fps"], c["codec"])
     bloqueador = BloqueadorSessao(modo_simulado=not args.lock_enabled)
-    modo = "benchmark" if args.benchmark else "real" if args.lock_enabled else "simulacao"
+    modo = "benchmark" if (args.benchmark or args.resource_benchmark) else "real" if args.lock_enabled else "simulacao"
     logger = configurar_log(config["logging"]["file"], config["logging"]["enabled"])
     registrar_evento(logger, "inicio", controlador.estado, controlador, modo)
     etapa = "inicializacao"
     acao_executada = False
     metricas = None
+    recursos = None
+    captura_recente = None
     motivo = "erro"
     try:
+        if config["runtime"]["cpu_threads"] is not None:
+            torch.set_num_threads(config["runtime"]["cpu_threads"])
+        if args.resource_benchmark:
+            recursos = Recursos(config["runtime"]["resource_interval"], config)
+            recursos.iniciar()
         etapa = "inferencia"
         d = config["detector"]
         detector = Detector(d["model"], d["device"], d["imgsz"], d["confidence"], d["classes"])
@@ -142,16 +159,25 @@ def main() -> int:
                             "pytorch": torch.__version__, "ultralytics": ultralytics.__version__},
             }, aquecimento=config["benchmark"]["warmup"])
             print(f"Benchmark: {config['benchmark']['warmup']:g} s de aquecimento e {args.duration:g} s de coleta.", flush=True)
+        limite_fps = config["runtime"]["inference_fps"]
+        limitador = Limitador(limite_fps) if limite_fps is not None else None
+        if limitador is not None:
+            captura_recente = CapturaRecente(camera)
+        inicio_recursos = time.monotonic()
         ajuda = True
         numero_quadro = 0
         intervalos: deque[float] = deque(maxlen=30)
         anterior = time.perf_counter()
         while True:
             inicio_quadro = time.perf_counter()
+            if limitador is not None:
+                limitador.aguardar()
             etapa = "captura"
-            quadro = camera.ler()
+            quadro = captura_recente.ler() if captura_recente else camera.ler()
             numero_quadro += 1
             etapa = "inferencia"
+            if limitador is not None:
+                limitador.ultimo = time.monotonic()
             deteccoes = detector.detectar(quadro)
             etapa = "processamento"
             altura_quadro, largura_quadro = quadro.shape[:2]
@@ -189,17 +215,21 @@ def main() -> int:
             intervalos.append(agora - anterior)
             anterior = agora
             fps_efetivo = len(intervalos) / sum(intervalos) if sum(intervalos) > 0 else 0.0
-            interface = renderizar(quadro, deteccoes, filtro, {
-                "app": config["app"]["name"], "versao": config["app"]["version"],
-                "modelo": Path(d["model"]).stem.upper(), "dispositivo": d["device"],
-                "fps": fps_efetivo, "latencia": detector.latencia_ms, "total": len(deteccoes),
-                "validas": len(validas), "descartadas": len(descartadas),
-                "confianca": d["confidence"], "area": filtro.min_area,
-                "limite": controlador.tempo_limite, "estado": controlador.estado.name,
-                "restante": tempo_restante, "modo": modo,
-            }, ajuda)
-            cv2.imshow("SentinelCV", interface)
-            tecla = cv2.waitKey(1) & 0xFF
+            tecla = -1
+            if not config["runtime"]["headless"]:
+                interface = renderizar(quadro, deteccoes, filtro, {
+                    "app": config["app"]["name"], "versao": config["app"]["version"],
+                    "modelo": Path(d["model"]).stem.upper(), "dispositivo": d["device"],
+                    "fps": fps_efetivo, "latencia": detector.latencia_ms, "total": len(deteccoes),
+                    "validas": len(validas), "descartadas": len(descartadas),
+                    "confianca": d["confidence"], "area": filtro.min_area,
+                    "limite": controlador.tempo_limite, "estado": controlador.estado.name,
+                    "restante": tempo_restante, "modo": modo,
+                }, ajuda)
+                cv2.imshow("SentinelCV", interface)
+                tecla = cv2.waitKey(1) & 0xFF
+            if recursos is not None:
+                recursos.atualizar(fps_efetivo, detector.latencia_ms)
             fim_quadro = time.perf_counter()
             concluido = metricas.registrar(
                 numero_quadro, inicio_quadro, fim_quadro, detector.latencia_ms,
@@ -221,9 +251,16 @@ def main() -> int:
             if tecla in (ord("q"), ord("Q")):
                 motivo = "interrompido_pelo_usuario"
                 break
+            if args.resource_benchmark and not args.benchmark and time.monotonic() - inicio_recursos >= args.duration:
+                concluido = True
             if concluido:
                 motivo = "duracao_concluida"
                 break
+        return 0
+    except KeyboardInterrupt:
+        motivo = "interrompido_pelo_usuario"
+        registrar_evento(logger, "interrupcao", controlador.estado, controlador, modo)
+        print("Encerramento solicitado.", flush=True)
         return 0
     except Exception as erro:
         anterior_estado = controlador.estado
@@ -238,11 +275,16 @@ def main() -> int:
         return 1
     finally:
         try:
-            camera.liberar()
+            captura_recente.liberar() if captura_recente else camera.liberar()
         finally:
             try:
-                cv2.destroyAllWindows()
+                if not config["runtime"]["headless"]:
+                    cv2.destroyAllWindows()
             finally:
+                if recursos is not None:
+                    recursos.finalizar()
+                    csv_recursos, json_recursos = recursos.exportar(config["benchmark"]["output_dir"], motivo)
+                    print(f"Recursos: {csv_recursos}\nResumo: {json_recursos}")
                 if metricas is not None:
                     csv_path, json_path = metricas.exportar(diretorio=Path(config["benchmark"]["output_dir"]), motivo=motivo)
                     print("Resumo do benchmark:")

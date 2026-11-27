@@ -14,6 +14,7 @@ DEFAULTS = {
     'security': {'lock_enabled': False, 'fail_safe': True},
     'benchmark': {'duration': 30, 'warmup': 5, 'output_dir': 'results'},
     'logging': {'enabled': True, 'file': 'logs/sentinelcv.log'},
+    'runtime': {'inference_fps': None, 'cpu_threads': None, 'headless': False, 'resource_interval': 1.0},
 }
 
 
@@ -40,6 +41,12 @@ def validar_config(config):
     b = config['benchmark']
     if not numero(b['duration'], 0, inclusivo=False) or not numero(b['warmup'], 0):
         raise ValueError('Duração ou aquecimento do benchmark inválido.')
+    runtime = config['runtime']
+    if ((runtime['inference_fps'] is not None and not numero(runtime['inference_fps'], 0, inclusivo=False))
+            or (runtime['cpu_threads'] is not None and not inteiro(runtime['cpu_threads'], 1))
+            or type(runtime['headless']) is not bool
+            or not numero(runtime['resource_interval'], 0, inclusivo=False)):
+        raise ValueError('Configuração de execução inválida.')
     for sec, keys in (('security', ('lock_enabled', 'fail_safe')), ('logging', ('enabled',))):
         if any(type(config[sec][k]) is not bool for k in keys):
             raise ValueError(f'Configuração {sec} inválida.')
